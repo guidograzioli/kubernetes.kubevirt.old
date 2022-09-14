@@ -1,11 +1,11 @@
-# collection_template
-You can build a new repository for an Ansible Collection using this template by following [Creating a repository from a template](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template). This README.md contains recommended headings for your collection README.md, with comments describing what each section should contain. Once you have created your collection repository, delete this paragraph and the title above it from your README.md.
-
-# Foo Collection for Ansible
+# KubeVirt Collection for Ansible
 <!-- Add CI and code coverage badges here. Samples included below. -->
-[![CI](https://github.com/ansible-collections/REPONAMEHERE/workflows/CI/badge.svg?event=push)](https://github.com/ansible-collections/REPONAMEHERE/actions) [![Codecov](https://img.shields.io/codecov/c/github/ansible-collections/REPONAMEHERE)](https://codecov.io/gh/ansible-collections/REPONAMEHERE)
+[![CI](https://github.com/0xFelix/kubernetes.kubevirt/workflows/CI/badge.svg?event=push)](https://github.com/0xFelix/kubernetes.kubevirt/actions) [![Codecov](https://img.shields.io/codecov/c/github/0xFelix/kubernetes.kubevirt)](https://codecov.io/gh/0xFelix/kubernetes.kubevirt)
 
 <!-- Describe the collection and why a user would want to use it. What does the collection do? -->
+This repo hosts the kubernetes.kubevirt Ansible Collection.
+
+The collection includes an inventory plugin for Ansible to automate the management of VMs running on KubeVirt.
 
 ## Code of Conduct
 
@@ -66,6 +66,8 @@ Every voice is important. If you have something on your mind, create an issue or
 ## External requirements
 
 <!-- List any external resources the collection depends on, for example minimum versions of an OS, libraries, or utilities. Do not list other Ansible collections here. -->
+- python >= 3.6
+- kubernetes (git+https://github.com/0xFelix/python.git@07d6623b64ffb5e76f6ac9f967c91c65416af0a1)
 
 ### Supported connections
 <!-- Optional. If your collection supports only specific connection types (such as HTTPAPI, netconf, or others), list them here. -->
@@ -82,25 +84,25 @@ Every voice is important. If you have something on your mind, create an issue or
 
 Before using this collection, you need to install it with the Ansible Galaxy command-line tool:
 ```bash
-ansible-galaxy collection install NAMESPACE.COLLECTION_NAME
+ansible-galaxy collection install kubernetes.kubevirt
 ```
 
 You can also include it in a `requirements.yml` file and install it with `ansible-galaxy collection install -r requirements.yml`, using the format:
 ```yaml
 ---
 collections:
-  - name: NAMESPACE.COLLECTION_NAME
+  - name: kubernetes.kubevirt
 ```
 
 Note that if you install the collection from Ansible Galaxy, it will not be upgraded automatically when you upgrade the `ansible` package. To upgrade the collection to the latest available version, run the following command:
 ```bash
-ansible-galaxy collection install NAMESPACE.COLLECTION_NAME --upgrade
+ansible-galaxy collection install kubernetes.kubevirt --upgrade
 ```
 
 You can also install a specific version of the collection, for example, if you need to downgrade when something is broken in the latest version (please report an issue in this repository). Use the following syntax to install version `0.1.0`:
 
 ```bash
-ansible-galaxy collection install NAMESPACE.COLLECTION_NAME:==0.1.0
+ansible-galaxy collection install kubernetes.kubevirt:==0.1.0
 ```
 
 See [Ansible Using collections](https://docs.ansible.com/ansible/devel/user_guide/collections_using.html) for more details.
