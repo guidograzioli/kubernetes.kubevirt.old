@@ -131,7 +131,7 @@ connections:
 from dataclasses import dataclass
 import json
 
-from ansible_collections.kubernetes.core.plugins.module_utils.k8s.client import (
+from ansible_collections.kubernetes.core.plugins.module_utils.common import (
     get_api_client,
 )
 from ansible_collections.kubernetes.core.plugins.inventory.k8s import (
