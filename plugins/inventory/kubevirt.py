@@ -141,7 +141,10 @@ from ansible_collections.kubernetes.core.plugins.inventory.k8s import (
     format_dynamic_api_exc,
 )
 
-from kubernetes.dynamic.resource import ResourceField
+try:
+    from kubernetes.dynamic.resource import ResourceField
+except ImportError:
+    pass
 
 try:
     from kubernetes.dynamic.exceptions import DynamicApiError
