@@ -9,14 +9,14 @@ DOCUMENTATION = """
     name: kubevirt
     plugin_type: inventory
     author:
-      - KubeVirt Team (@kubevirt)
+      - 0xFelix
 
     short_description: KubeVirt inventory source
     extends_documentation_fragment:
       - inventory_cache
       - constructed
     description:
-      - Fetch running VirtualMachines for one or more namespaces.
+      - Fetch running VirtualMachineInstances for one or more namespaces.
       - Groups by namespace, namespace_vms and labels.
       - Uses kubevirt.(yml|yaml) YAML configuration file to set parameter values.
 
@@ -110,7 +110,7 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-# File must be named kubevirt.yaml or kubevirt.yml
+# Filename must end with kubevirt.[yml|yaml]
 
 # Authenticate with token, and return all virtual machines for all namespaces
 plugin: kubernetes.kubevirt.kubevirt
@@ -119,12 +119,12 @@ connections:
    token: xxxxxxxxxxxxxxxx
    ssl_verify: false
 
-# Use default config (~/.kube/config) file and active context, and return vms with interfaces
-# connected to network myovsnetwork and from namespace vms
-plugin: community.kubevirt.kubevirt
+# Use default config (~/.kube/config) file and active context, and return vmis with interfaces
+# connected to network myovsnetwork and from namespace vmis
+plugin: kubernetes.kubevirt.kubevirt
 connections:
   - namespaces:
-      - vms
+      - vmis
     network_name: myovsnetwork
 """
 
@@ -139,6 +139,8 @@ from ansible_collections.kubernetes.core.plugins.inventory.k8s import (
     InventoryModule as K8sInventoryModule,
     format_dynamic_api_exc,
 )
+
+from kubernetes.dynamic.resource import ResourceField
 
 try:
     from kubernetes.dynamic.exceptions import DynamicApiError
@@ -261,7 +263,7 @@ class InventoryModule(K8sInventoryModule):
             vmi_annotations = (
                 {}
                 if not vmi.metadata.annotations
-                else vmi.metadata.annotations.to_dict()
+                else self.__resource_field_to_dict(vmi.metadata.annotations)
             )
 
             if vmi.metadata.labels:
@@ -272,7 +274,7 @@ class InventoryModule(K8sInventoryModule):
                     if group_name not in vmi_groups:
                         vmi_groups.append(group_name)
                     self.inventory.add_group(group_name)
-                vmi_labels = vmi.metadata.labels.to_dict()
+                vmi_labels = self.__resource_field_to_dict(vmi.metadata.labels)
             else:
                 vmi_labels = {}
 
@@ -316,17 +318,21 @@ class InventoryModule(K8sInventoryModule):
 
             # Add hostvars from status
             vmi_active_pods = (
-                {} if not vmi.status.activePods else vmi.status.activePods.to_dict()
+                {}
+                if not vmi.status.activePods
+                else self.__resource_field_to_dict(vmi.status.activePods)
             )
             self.inventory.set_variable(vmi_name, "vmi_active_pods", vmi_active_pods)
             vmi_conditions = (
                 []
                 if not vmi.status.conditions
-                else [c.to_dict() for c in vmi.status.conditions]
+                else [self.__resource_field_to_dict(c) for c in vmi.status.conditions]
             )
             self.inventory.set_variable(vmi_name, "vmi_conditions", vmi_conditions)
             vmi_guest_os_info = (
-                {} if not vmi.status.guestOSInfo else vmi.status.guestOSInfo.to_dict()
+                {}
+                if not vmi.status.guestOSInfo
+                else self.__resource_field_to_dict(vmi.status.guestOSInfo)
             )
             self.inventory.set_variable(
                 vmi_name, "vmi_guest_os_info", vmi_guest_os_info
@@ -334,7 +340,7 @@ class InventoryModule(K8sInventoryModule):
             vmi_interfaces = (
                 []
                 if not vmi.status.interfaces
-                else [i.to_dict() for i in vmi.status.interfaces]
+                else [self.__resource_field_to_dict(i) for i in vmi.status.interfaces]
             )
             self.inventory.set_variable(vmi_name, "vmi_interfaces", vmi_interfaces)
             self.inventory.set_variable(
@@ -353,7 +359,10 @@ class InventoryModule(K8sInventoryModule):
             vmi_phase_transition_timestamps = (
                 []
                 if not vmi.status.phaseTransitionTimestamps
-                else [p.to_dict() for p in vmi.status.phaseTransitionTimestamps]
+                else [
+                    self.__resource_field_to_dict(p)
+                    for p in vmi.status.phaseTransitionTimestamps
+                ]
             )
             self.inventory.set_variable(
                 vmi_name,
@@ -369,7 +378,7 @@ class InventoryModule(K8sInventoryModule):
             vmi_volume_status = (
                 []
                 if not vmi.status.volumeStatus
-                else [v.to_dict() for v in vmi.status.volumeStatus]
+                else [self.__resource_field_to_dict(v) for v in vmi.status.volumeStatus]
             )
             self.inventory.set_variable(
                 vmi_name, "vmi_volume_status", vmi_volume_status
@@ -380,3 +389,13 @@ class InventoryModule(K8sInventoryModule):
             if path.endswith(("kubevirt.yml", "kubevirt.yaml")):
                 return True
         return False
+
+    def __resource_field_to_dict(self, field):
+        if isinstance(field, ResourceField):
+            return {
+                k: self.__resource_field_to_dict(v) for k, v in field.__dict__.items()
+            }
+        elif isinstance(field, (list, tuple)):
+            return [self.__resource_field_to_dict(item) for item in field]
+        else:
+            return field
