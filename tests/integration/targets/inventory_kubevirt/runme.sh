@@ -3,8 +3,8 @@
 set -eux
 
 source virtualenv.sh
-#pip install kubernetes
-pip install git+https://github.com/0xFelix/python.git@07d6623b64ffb5e76f6ac9f967c91c65416af0a1
+pip install kubernetes
+ansible-galaxy install kubernetes.core
 
 ./server.py &
 
