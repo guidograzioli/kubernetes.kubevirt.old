@@ -2,9 +2,6 @@
 
 set -eux
 
-source virtualenv.sh
-pip install kubernetes
-
 ./server.py &
 
 cleanup() {
