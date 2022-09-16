@@ -105,9 +105,8 @@ DOCUMENTATION = """
             default: "ansible"
 
     requirements:
-    - "python >= 3.7"
+    - "python >= 3.8"
     - "kubernetes >= 12.0.0"
-    - "PyYAML >= 3.11"
 """
 
 EXAMPLES = """

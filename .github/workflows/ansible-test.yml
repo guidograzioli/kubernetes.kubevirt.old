@@ -45,7 +45,7 @@ jobs:
           # ignore.txt file.
         # - stable-2.9 # Only if your collection supports Ansible 2.9
         # - stable-2.10 # Only if your collection supports ansible-base 2.10
-          - stable-2.11
+        # - stable-2.11
           - stable-2.12
           - stable-2.13
           - devel
@@ -122,13 +122,12 @@ jobs:
         ansible:
           # - stable-2.9 # Only if your collection supports Ansible 2.9
           # - stable-2.10 # Only if your collection supports ansible-base 2.10
-          - stable-2.11
+          # - stable-2.11
           - stable-2.12
           - stable-2.13
           - devel
         # - milestone
         python:
-          - '3.7'
           - '3.8'
           - '3.9'
           - '3.10'
