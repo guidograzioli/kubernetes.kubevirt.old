@@ -7,18 +7,19 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     name: kubevirt
-    plugin_type: inventory
     author:
-      - 0xFelix
+      - Felix Matouschek (@0xFelix)
 
     short_description: KubeVirt inventory source
-    extends_documentation_fragment:
-      - inventory_cache
-      - constructed
+
     description:
       - Fetch running VirtualMachineInstances for one or more namespaces.
       - Groups by namespace, namespace_vms and labels.
       - Uses kubevirt.(yml|yaml) YAML configuration file to set parameter values.
+
+    extends_documentation_fragment:
+      - inventory_cache
+      - constructed
 
     options:
       plugin:
@@ -104,7 +105,7 @@ DOCUMENTATION = """
             default: "ansible"
 
     requirements:
-    - "python >= 3.6"
+    - "python >= 3.7"
     - "kubernetes >= 12.0.0"
     - "PyYAML >= 3.11"
 """

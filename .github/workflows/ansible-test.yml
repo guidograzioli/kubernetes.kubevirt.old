@@ -65,41 +65,43 @@ jobs:
           # test-deps: >-
           #   ansible.netcommon
           #   ansible.utils
+          test-deps: >-
+            kubernetes.core
 
 ###
 # Unit tests (OPTIONAL)
 #
 # https://docs.ansible.com/ansible/latest/dev_guide/testing_units.html
 
-  units:
-    runs-on: ubuntu-latest
-    name: Units (Ⓐ${{ matrix.ansible }})
-    strategy:
-      # As soon as the first unit test fails, cancel the others to free up the CI queue
-      fail-fast: true
-      matrix:
-        ansible:
-          # - stable-2.9 # Only if your collection supports Ansible 2.9
-          # - stable-2.10 # Only if your collection supports ansible-base 2.10
-          - stable-2.11
-          - stable-2.12
-          - stable-2.13
-          - devel
-        # - milestone
-
-    steps:
-      - name: >-
-          Perform unit testing against
-          Ansible version ${{ matrix.ansible }}
-        uses: ansible-community/ansible-test-gh-action@release/v1
-        with:
-          ansible-core-version: ${{ matrix.ansible }}
-          testing-type: units
-          # OPTIONAL If your unit tests require code
-          # from other collections, install them like this
-          test-deps: >-
-            ansible.netcommon
-            ansible.utils
+#  units:
+#    runs-on: ubuntu-latest
+#    name: Units (Ⓐ${{ matrix.ansible }})
+#    strategy:
+#      # As soon as the first unit test fails, cancel the others to free up the CI queue
+#      fail-fast: true
+#      matrix:
+#        ansible:
+#          # - stable-2.9 # Only if your collection supports Ansible 2.9
+#          # - stable-2.10 # Only if your collection supports ansible-base 2.10
+#          - stable-2.11
+#          - stable-2.12
+#          - stable-2.13
+#          - devel
+#        # - milestone
+#
+#    steps:
+#      - name: >-
+#          Perform unit testing against
+#          Ansible version ${{ matrix.ansible }}
+#        uses: ansible-community/ansible-test-gh-action@release/v1
+#        with:
+#          ansible-core-version: ${{ matrix.ansible }}
+#          testing-type: units
+#          # OPTIONAL If your unit tests require code
+#          # from other collections, install them like this
+#          test-deps: >-
+#            ansible.netcommon
+#            ansible.utils
 
 ###
 # Integration tests (RECOMMENDED)
@@ -126,10 +128,6 @@ jobs:
           - devel
         # - milestone
         python:
-          - '2.6'
-          - '2.7'
-          - '3.5'
-          - '3.6'
           - '3.7'
           - '3.8'
           - '3.9'
@@ -145,7 +143,6 @@ jobs:
             python: '3.10'
           - ansible: stable-2.11
             python: '3.10'
-            
 
     steps:
       - name: >-
@@ -161,4 +158,6 @@ jobs:
           testing-type: integration
           # OPTIONAL If your integration tests require code
           # from other collections, install them like this
-          test-deps: ansible.netcommon
+          test-deps: >-
+            ansible.netcommon
+            kubernetes.core

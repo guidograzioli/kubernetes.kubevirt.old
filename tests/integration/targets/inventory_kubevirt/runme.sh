@@ -4,7 +4,6 @@ set -eux
 
 source virtualenv.sh
 pip install kubernetes
-ansible-galaxy collection install kubernetes.core
 
 ./server.py &
 

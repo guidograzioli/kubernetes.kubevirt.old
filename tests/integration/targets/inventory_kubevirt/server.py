@@ -258,7 +258,8 @@ if __name__ == "__main__":
                                 "queueCount": 1,
                             }
                         ],
-                        "launcherContainerImageVersion": "registry:5000/kubevirt/virt-launcher@sha256:5c1474d240488c9a8e6e6e48b2ad446113744353b4cd2464baee3550e6b1829d",
+                        "launcherContainerImageVersion":
+                            "registry:5000/kubevirt/virt-launcher@sha256:5c1474d240488c9a8e6e6e48b2ad446113744353b4cd2464baee3550e6b1829d",
                         "migrationMethod": "BlockMigration",
                         "migrationTransport": "Unix",
                         "nodeName": "node01",
