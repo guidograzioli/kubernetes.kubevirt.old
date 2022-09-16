@@ -67,7 +67,6 @@ jobs:
           #   ansible.utils
           test-deps: >-
             kubernetes.core
-          pre-test-cmd: pip install kubernetes
 
 ###
 # Unit tests (OPTIONAL)
@@ -162,4 +161,3 @@ jobs:
           test-deps: >-
             ansible.netcommon
             kubernetes.core
-          pre-test-cmd: pip install kubernetes
