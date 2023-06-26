@@ -144,7 +144,6 @@ connections:
 """
 
 from dataclasses import dataclass
-import json
 
 from ansible_collections.kubernetes.core.plugins.module_utils.k8s.client import (
     get_api_client,
@@ -168,6 +167,8 @@ except ImportError:
 
 @dataclass
 class GetVmiOptions:
+    """This class holds the options defined by the user."""
+
     api_version: str
     label_selector: str
     network_name: str
@@ -181,11 +182,23 @@ class GetVmiOptions:
 
 
 class InventoryModule(K8sInventoryModule):
+    """This class implements the actual inventory module."""
+
     NAME = "kubernetes.kubevirt.kubevirt"
+
+    def __init__(self):
+        super().__init__()
+        self.host_format = None
 
     def setup(self, config_data, cache, cache_key):
         self.host_format = config_data.get("host_format")
-        super(InventoryModule, self).setup(config_data, cache, cache_key)
+        super().setup(config_data, cache, cache_key)
+
+    def verify_file(self, path):
+        if super().verify_file(path):
+            if path.endswith(("kubevirt.yml", "kubevirt.yaml")):
+                return True
+        return False
 
     def fetch_objects(self, connections):
         if connections:
@@ -213,16 +226,16 @@ class InventoryModule(K8sInventoryModule):
                     self.host_format,
                 )
                 for namespace in namespaces:
-                    self.get_vmis_for_namespace(client, name, namespace, opts)
+                    self.__get_vmis_for_namespace(client, name, namespace, opts)
         else:
             client = get_api_client()
             name = self.get_default_host_name(client.configuration.host)
             namespaces = self.get_available_namespaces(client)
-            opts = GetVmiOptions(host_format=self.host_format)
+            opts = GetVmiOptions(None, None, None, self.host_format)
             for namespace in namespaces:
-                self.get_vmis_for_namespace(client, name, namespace, opts)
+                self.__get_vmis_for_namespace(client, name, namespace, opts)
 
-    def get_vmis_for_namespace(self, client, name, namespace, opts):
+    def __get_vmis_for_namespace(self, client, name, namespace, opts):
         v1_vmi = client.resources.get(
             api_version=opts.api_version, kind="VirtualMachineInstance"
         )
@@ -232,10 +245,10 @@ class InventoryModule(K8sInventoryModule):
             self.display.debug(exc)
             raise K8sInventoryException(
                 f"Error fetching VirtualMachineInstance list: {format_dynamic_api_exc(exc)}"
-            )
+            ) from exc
 
-        namespace_group = "namespace_{0}".format(namespace)
-        namespace_vmis_group = "{0}_vmis".format(namespace_group)
+        namespace_group = f"namespace_{namespace}"
+        namespace_vmis_group = f"{namespace_group}_vmis"
 
         name = self._sanitize_group_name(name)
         namespace_group = self._sanitize_group_name(namespace_group)
@@ -279,7 +292,7 @@ class InventoryModule(K8sInventoryModule):
             if vmi.metadata.labels:
                 # create a group for each label_value
                 for key, value in vmi.metadata.labels:
-                    group_name = "label_{0}_{1}".format(key, value)
+                    group_name = f"label_{key}_{value}"
                     group_name = self._sanitize_group_name(group_name)
                     if group_name not in vmi_groups:
                         vmi_groups.append(group_name)
@@ -378,21 +391,17 @@ class InventoryModule(K8sInventoryModule):
                 vmi_name, "vmi_volume_status", vmi_volume_status
             )
 
-    def verify_file(self, path):
-        if super(InventoryModule, self).verify_file(path):
-            if path.endswith(("kubevirt.yml", "kubevirt.yaml")):
-                return True
-        return False
-
     # Replace this with ResourceField.to_dict() once available in a stable release of
     # the Kubernetes Python client
-    # See https://github.com/kubernetes-client/python/blob/main/kubernetes/base/dynamic/resource.py#L393
+    # See
+    # https://github.com/kubernetes-client/python/blob/main/kubernetes/base/dynamic/resource.py#L393
     def __resource_field_to_dict(self, field):
         if isinstance(field, ResourceField):
             return {
                 k: self.__resource_field_to_dict(v) for k, v in field.__dict__.items()
             }
-        elif isinstance(field, (list, tuple)):
+
+        if isinstance(field, (list, tuple)):
             return [self.__resource_field_to_dict(item) for item in field]
-        else:
-            return field
+
+        return field
