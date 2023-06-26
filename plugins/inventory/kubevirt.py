@@ -157,7 +157,6 @@ class GetVmiOptions:
     api_version: str
     network_name: str
     host_format: str
-    virtctl_proxy: bool
 
     def __post_init__(self):
         if self.annotation_variable is None:
@@ -166,8 +165,6 @@ class GetVmiOptions:
             self.api_version = "kubevirt.io/v1"
         if self.host_format is None:
             self.host_format = "{namespace}-{name}"
-        if self.virtctl_proxy is None:
-            self.virtctl_proxy = False
 
 
 class InventoryModule(K8sInventoryModule):
@@ -201,7 +198,6 @@ class InventoryModule(K8sInventoryModule):
                     connection.get("api_version"),
                     connection.get("network_name", connection.get("interface_name")),
                     self.host_format,
-                    connection.get("virtctl_proxy"),
                 )
                 for namespace in namespaces:
                     self.get_vmis_for_namespace(client, name, namespace, opts)
@@ -251,10 +247,8 @@ class InventoryModule(K8sInventoryModule):
                     None,
                 )
 
-            # If interface is not found or IP address is not reported skip this VM and virtctl proxying is disabled:
-            if (
-                interface is None or interface.ipAddress is None
-            ) and not opts.virtctl_proxy:
+            # If interface is not found or IP address is not reported skip this VM:
+            if interface is None or interface.ipAddress is None:
                 continue
 
             vmi_name = opts.host_format.format(
@@ -289,16 +283,7 @@ class InventoryModule(K8sInventoryModule):
 
             # Set up the connection
             self.inventory.set_variable(vmi_name, "ansible_connection", "ssh")
-            if opts.virtctl_proxy:
-                self.inventory.set_variable(
-                    vmi_name,
-                    "ansible_ssh_extra_args",
-                    f"-o ProxyCommand='virtctl port-forward --stdio=true vmi/{vmi.metadata.name}.{namespace} 22'",
-                )
-            else:
-                self.inventory.set_variable(
-                    vmi_name, "ansible_host", interface.ipAddress
-                )
+            self.inventory.set_variable(vmi_name, "ansible_host", interface.ipAddress)
 
             # Add hostvars from metadata
             self.inventory.set_variable(vmi_name, "object_type", "vmi")
