@@ -1,4 +1,4 @@
-# Copyright (c) 2018 Ansible Project
+# Copyright (c) 2023 KubeVirt Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -13,8 +13,9 @@ DOCUMENTATION = """
     short_description: KubeVirt inventory source
 
     description:
-      - Fetch running VirtualMachineInstances for one or more namespaces.
+      - Fetch running VirtualMachineInstances for one or more namespaces with an optional label selector.
       - Groups by namespace, namespace_vms and labels.
+      - Uses the kubectl connection plugin to access the Kubernetes cluster.
       - Uses kubevirt.(yml|yaml) YAML configuration file to set parameter values.
 
     extends_documentation_fragment:
@@ -28,7 +29,7 @@ DOCUMENTATION = """
         choices: ["kubevirt", "kubernetes.kubevirt.kubevirt"]
       host_format:
         description:
-          - Specify the format of the host in the inventory group.
+          - Specify the format of the host in the inventory group. Available specifiers: name, namespace, uid.
         default: "{namespace}-{name}"
       connections:
         description:
@@ -88,44 +89,58 @@ DOCUMENTATION = """
             aliases: [ verify_ssl ]
           namespaces:
             description:
-              - List of namespaces. If not specified, will fetch all containers for all namespaces user is authorized
-                to access.
+              - List of namespaces. If not specified, will fetch all VirtualMachineInstances for all namespaces
+                the user is authorized to access.
+          label_selector:
+            description:
+              - Define a label selector to select a subset of the fetched VirtualMachineInstances.
           network_name:
             description:
-              - In case of multiple network attached to virtual machine, define which interface should be returned as primary IP
-                address.
+              - In case multiple networks are attached to a VirtualMachineInstance, define which interface should
+                be returned as primary IP address.
             aliases: [ interface_name ]
           api_version:
             description:
-              - Specify the KubeVirt API version.
-          annotation_variable:
-            description:
-              - Specify the name of the annotation which provides data, which should be used as inventory host variables.
-              - Note, that the value in ansible annotations should be json.
-            default: "ansible"
+              - Specify the used KubeVirt API version.
+            default: "kubevirt.io/v1"
 
     requirements:
     - "python >= 3.8"
     - "kubernetes >= 12.0.0"
+    - "PyYAML >= 3.11"
 """
 
 EXAMPLES = """
 # Filename must end with kubevirt.[yml|yaml]
 
-# Authenticate with token, and return all virtual machines for all namespaces
+# Authenticate with token, and return all VirtualMachineInstances for all accessible namespaces
 plugin: kubernetes.kubevirt.kubevirt
 connections:
- - host: https://kubevirt.io
-   token: xxxxxxxxxxxxxxxx
-   ssl_verify: false
+  - host: https://192.168.64.4:8443
+    api_key: xxxxxxxxxxxxxxxx
+    validate_certs: false
 
-# Use default config (~/.kube/config) file and active context, and return vmis with interfaces
-# connected to network myovsnetwork and from namespace vmis
+# Use default config (~/.kube/config) file and active context, and return VirtualMachineInstances
+# from namespace testing with interfaces connected to network myovsnetwork
 plugin: kubernetes.kubevirt.kubevirt
 connections:
   - namespaces:
-      - vmis
+      - testing
     network_name: myovsnetwork
+
+# Use default config (~/.kube/config) file and active context, and return VirtualMachineInstances
+# from namespace testing with label app=foo
+plugin: kubernetes.kubevirt.kubevirt
+connections:
+  - namespaces:
+      - testing
+    label_selector: app=foo
+
+# Use a custom config file, and a specific context.
+plugin: kubernetes.kubevirt.kubevirt
+connections:
+  - kubeconfig: /path/to/config
+    context: 'awx/192-168-64-4:8443/developer'
 """
 
 from dataclasses import dataclass
@@ -369,6 +384,9 @@ class InventoryModule(K8sInventoryModule):
                 return True
         return False
 
+    # Replace this with ResourceField.to_dict() once available in a stable release of
+    # the Kubernetes Python client
+    # See https://github.com/kubernetes-client/python/blob/main/kubernetes/base/dynamic/resource.py#L393
     def __resource_field_to_dict(self, field):
         if isinstance(field, ResourceField):
             return {
