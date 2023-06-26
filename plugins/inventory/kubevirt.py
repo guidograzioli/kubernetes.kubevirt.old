@@ -154,6 +154,7 @@ except ImportError:
 @dataclass
 class GetVmiOptions:
     api_version: str
+    label_selector: str
     network_name: str
     host_format: str
 
@@ -192,6 +193,7 @@ class InventoryModule(K8sInventoryModule):
 
                 opts = GetVmiOptions(
                     connection.get("api_version"),
+                    connection.get("label_selector"),
                     connection.get("network_name", connection.get("interface_name")),
                     self.host_format,
                 )
@@ -210,7 +212,7 @@ class InventoryModule(K8sInventoryModule):
             api_version=opts.api_version, kind="VirtualMachineInstance"
         )
         try:
-            obj = v1_vmi.get(namespace=namespace)
+            obj = v1_vmi.get(namespace=namespace, label_selector=opts.label_selector)
         except DynamicApiError as exc:
             self.display.debug(exc)
             raise K8sInventoryException(
