@@ -5,6 +5,9 @@ metadata:
 spec:
   runStrategy: Always
   template:
+    metadata:
+      labels:
+        app: test
     spec:
       domain:
         devices:
