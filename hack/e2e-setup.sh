@@ -17,6 +17,11 @@
 # Copyright 2023 Red Hat, Inc.
 #
 
+# This script is based on:
+# - https://github.com/ovn-org/ovn-kubernetes/blob/master/contrib/kind.sh
+# - https://github.com/kiagnose/kiagnose/blob/main/automation/e2e.sh
+# - https://github.com/kiagnose/kiagnose/blob/main/checkups/kubevirt-vm-latency/automation/e2e.sh
+
 ARGCOUNT=$#
 # Returns the full directory name of the script
 DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
@@ -46,8 +51,12 @@ set_default_params() {
   SECONDARY_NETWORK_RANGE_START=${SECONDARY_NETWORK_RANGE_START:-172.19.1.1}
   SECONDARY_NETWORK_RANGE_END=${SECONDARY_NETWORK_RANGE_END:-172.19.255.254}
   SECONDARY_NETWORK_GATEWAY=${SECONDARY_NETWORK_GATEWAY:-172.19.0.1}
+
+  NAMESPACE=${NAMESPACE:-default}
 }
 
+# Taken from:
+# https://github.com/kubevirt/kubevirtci/blob/f661bfe0e3678e5409c057855951c50a912571a0/cluster-up/cluster/ephemeral-provider-common.sh#L26C1-L45C1
 detect_cri() {
   PODMAN_SOCKET=${PODMAN_SOCKET:-"/run/podman/podman.sock"}
 
@@ -73,6 +82,8 @@ detect_cri() {
   fi
 }
 
+# Taken from:
+# https://github.com/kubevirt/kubevirtci/blob/f661bfe0e3678e5409c057855951c50a912571a0/cluster-up/cluster/ephemeral-provider-common.sh#L20
 detect_podman_socket() {
   if curl --unix-socket "${PODMAN_SOCKET}" http://d/v3.0.0/libpod/info >/dev/null 2>&1; then
     echo "${PODMAN_SOCKET}"
@@ -163,6 +174,8 @@ deploy_kubevirt() {
   ${KUBECTL} get pods -n kubevirt
 }
 
+# Taken from:
+# https://github.com/ovn-org/ovn-kubernetes/blob/59e0b62f4048be3df5b364b894b495f52f729cf1/contrib/kind.sh#L1241
 is_nested_virt_enabled() {
   local kvm_nested="unknown"
   if [ -f "/sys/module/kvm_intel/parameters/nested" ]; then
@@ -204,6 +217,7 @@ apiVersion: k8s.cni.cncf.io/v1
 kind: NetworkAttachmentDefinition
 metadata:
   name: ${SECONDARY_NETWORK_NAME}
+  namespace: ${NAMESPACE}
 spec:
   config: |
     {
@@ -228,7 +242,7 @@ spec:
 EOF
 
   echo "Successfully created NetworkAttachmentDefinition:"
-  ${KUBECTL} get networkattachmentdefinition.k8s.cni.cncf.io "${SECONDARY_NETWORK_NAME}" -o yaml
+  ${KUBECTL} get networkattachmentdefinition.k8s.cni.cncf.io "${SECONDARY_NETWORK_NAME}" --namespace "${NAMESPACE}" -o yaml
 }
 
 cleanup() {
@@ -237,7 +251,7 @@ cleanup() {
 }
 
 usage() {
-  echo -n "$0 [--install-kind] [--install-kubectl] [--configure-inotify-limits] [--create-cluster] [--deploy-kubevirt] [--deploy-cnao] [--create-nad] [--cleanup]"
+  echo -n "$0 [--install-kind] [--install-kubectl] [--configure-inotify-limits] [--create-cluster] [--deploy-kubevirt] [--deploy-cnao] [--create-nad] [--cleanup] [--namespace]"
 }
 
 set_default_options() {
@@ -264,6 +278,10 @@ parse_args() {
     --deploy-cnao) OPT_DEPLOY_CNAO=true ;;
     --create-nad) OPT_CREATE_NAD=true ;;
     --cleanup) OPT_CLEANUP=true ;;
+    --namespace)
+      shift
+      NAMESPACE=$1
+      ;;
     -v | --verbose)
       set -x
       ;;
@@ -293,12 +311,16 @@ set -euo pipefail
 if [ "${ARGCOUNT}" -eq "0" ]; then
   OPT_INSTALL_KIND=true
   OPT_INSTALL_KUBECTL=true
-  OPT_CONFIGURE_INOTIFY_LIMITS=true
   OPT_CREATE_CLUSTER=true
   OPT_CONFIGURE_SECONDARY_NETWORK=true
   OPT_DEPLOY_KUBEVIRT=true
   OPT_DEPLOY_CNAO=true
   OPT_CREATE_NAD=true
+fi
+
+if [ "${OPT_CLEANUP}" == true ]; then
+  cleanup
+  exit 0
 fi
 
 if [ "${OPT_INSTALL_KIND}" == true ]; then
@@ -331,8 +353,4 @@ fi
 
 if [ "${OPT_CREATE_NAD}" == true ]; then
   create_nad
-fi
-
-if [ "${OPT_CLEANUP}" == true ]; then
-  cleanup
 fi
