@@ -153,14 +153,11 @@ except ImportError:
 
 @dataclass
 class GetVmiOptions:
-    annotation_variable: str
     api_version: str
     network_name: str
     host_format: str
 
     def __post_init__(self):
-        if self.annotation_variable is None:
-            self.annotation_variable = "ansible"
         if self.api_version is None:
             self.api_version = "kubevirt.io/v1"
         if self.host_format is None:
@@ -194,7 +191,6 @@ class InventoryModule(K8sInventoryModule):
                     namespaces = self.get_available_namespaces(client)
 
                 opts = GetVmiOptions(
-                    connection.get("annotation_variable"),
                     connection.get("api_version"),
                     connection.get("network_name", connection.get("interface_name")),
                     self.host_format,
@@ -296,13 +292,6 @@ class InventoryModule(K8sInventoryModule):
                 vmi_name, "resource_version", vmi.metadata.resourceVersion
             )
             self.inventory.set_variable(vmi_name, "uid", vmi.metadata.uid)
-
-            # Add all variables which are listed in the annotation specified by opts.annotation_variable:
-            annotations_data = json.loads(
-                vmi_annotations.get(opts.annotation_variable, "{}")
-            )
-            for k, v in annotations_data.items():
-                self.inventory.set_variable(vmi_name, k, v)
 
             # Add hostvars from status
             vmi_active_pods = (
