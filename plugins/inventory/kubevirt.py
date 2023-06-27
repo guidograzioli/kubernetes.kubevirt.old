@@ -154,15 +154,8 @@ from ansible_collections.kubernetes.core.plugins.inventory.k8s import (
     format_dynamic_api_exc,
 )
 
-try:
-    from kubernetes.dynamic.resource import ResourceField
-except ImportError:
-    pass
-
-try:
-    from kubernetes.dynamic.exceptions import DynamicApiError
-except ImportError:
-    pass
+from kubernetes.dynamic.resource import ResourceField
+from kubernetes.dynamic.exceptions import DynamicApiError
 
 
 @dataclass
@@ -191,14 +184,13 @@ class InventoryModule(K8sInventoryModule):
         self.host_format = None
 
     def setup(self, config_data, cache, cache_key):
-        self.host_format = config_data.get("host_format")
         super().setup(config_data, cache, cache_key)
+        self.host_format = config_data.get("host_format")
 
     def verify_file(self, path):
-        if super().verify_file(path):
-            if path.endswith(("kubevirt.yml", "kubevirt.yaml")):
-                return True
-        return False
+        return super().verify_file(path) and path.endswith(
+            ("kubevirt.yml", "kubevirt.yaml")
+        )
 
     def fetch_objects(self, connections):
         if connections:
@@ -236,11 +228,13 @@ class InventoryModule(K8sInventoryModule):
                 self.__get_vmis_for_namespace(client, name, namespace, opts)
 
     def __get_vmis_for_namespace(self, client, name, namespace, opts):
-        v1_vmi = client.resources.get(
+        vmi_client = client.resources.get(
             api_version=opts.api_version, kind="VirtualMachineInstance"
         )
         try:
-            obj = v1_vmi.get(namespace=namespace, label_selector=opts.label_selector)
+            vmi_list = vmi_client.get(
+                namespace=namespace, label_selector=opts.label_selector
+            )
         except DynamicApiError as exc:
             self.display.debug(exc)
             raise K8sInventoryException(
@@ -260,7 +254,7 @@ class InventoryModule(K8sInventoryModule):
         self.inventory.add_group(namespace_vmis_group)
         self.inventory.add_child(namespace_group, namespace_vmis_group)
 
-        for vmi in obj.items:
+        for vmi in vmi_list.items:
             if not (vmi.status and vmi.status.interfaces):
                 continue
 
