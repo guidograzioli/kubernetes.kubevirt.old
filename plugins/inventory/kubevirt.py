@@ -144,18 +144,25 @@ connections:
 """
 
 from dataclasses import dataclass
+from json import loads
+
+from kubernetes.dynamic.resource import ResourceField
+from kubernetes.dynamic.exceptions import DynamicApiError
+
+from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
+
+from ansible_collections.kubernetes.core.plugins.module_utils.common import (
+    HAS_K8S_MODULE_HELPER,
+    k8s_import_exception,
+)
 
 from ansible_collections.kubernetes.core.plugins.module_utils.k8s.client import (
     get_api_client,
 )
-from ansible_collections.kubernetes.core.plugins.inventory.k8s import (
-    K8sInventoryException,
-    InventoryModule as K8sInventoryModule,
-    format_dynamic_api_exc,
-)
 
-from kubernetes.dynamic.resource import ResourceField
-from kubernetes.dynamic.exceptions import DynamicApiError
+
+class KubeVirtInventoryException(Exception):
+    pass
 
 
 @dataclass
@@ -174,32 +181,76 @@ class GetVmiOptions:
             self.host_format = "{namespace}-{name}"
 
 
-class InventoryModule(K8sInventoryModule):
+class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     """This class implements the actual inventory module."""
 
     NAME = "kubernetes.kubevirt.kubevirt"
 
+    connection_plugin = "kubernetes.core.kubectl"
+    transport = "kubectl"
+
+    @staticmethod
+    def get_default_host_name(host):
+        return (
+            host.replace("https://", "")
+            .replace("http://", "")
+            .replace(".", "-")
+            .replace(":", "_")
+        )
+
+    @staticmethod
+    def format_dynamic_api_exc(exc):
+        if exc.body:
+            if exc.headers and exc.headers.get("Content-Type") == "application/json":
+                message = loads(exc.body).get("message")
+                if message:
+                    return message
+            return exc.body
+
+        return f"{exc.status} Reason: {exc.reason}"
+
     def __init__(self):
         super().__init__()
         self.host_format = None
-
-    def setup(self, config_data, cache, cache_key):
-        super().setup(config_data, cache, cache_key)
-        self.host_format = config_data.get("host_format")
 
     def verify_file(self, path):
         return super().verify_file(path) and path.endswith(
             ("kubevirt.yml", "kubevirt.yaml")
         )
 
+    def parse(self, inventory, loader, path, cache=True):
+        super().parse(inventory, loader, path)
+        cache_key = self._get_cache_prefix(path)
+        config_data = self._read_config_data(path)
+        self.host_format = config_data.get("host_format")
+        self.setup(config_data, cache, cache_key)
+
+    def setup(self, config_data, cache, cache_key):
+        connections = config_data.get("connections")
+
+        if not HAS_K8S_MODULE_HELPER:
+            raise KubeVirtInventoryException(
+                f"This module requires the Kubernetes Python client. Try `pip install kubernetes`. Detail: {k8s_import_exception}"
+            )
+
+        source_data = None
+        if cache and cache_key in self._cache:
+            try:
+                source_data = self._cache[cache_key]
+            except KeyError:
+                pass
+
+        if not source_data:
+            self.fetch_objects(connections)
+
     def fetch_objects(self, connections):
         if connections:
             if not isinstance(connections, list):
-                raise K8sInventoryException("Expecting connections to be a list.")
+                raise KubeVirtInventoryException("Expecting connections to be a list.")
 
             for connection in connections:
                 if not isinstance(connection, dict):
-                    raise K8sInventoryException(
+                    raise KubeVirtInventoryException(
                         "Expecting connection to be a dictionary."
                     )
                 client = get_api_client(**connection)
@@ -218,16 +269,27 @@ class InventoryModule(K8sInventoryModule):
                     self.host_format,
                 )
                 for namespace in namespaces:
-                    self.__get_vmis_for_namespace(client, name, namespace, opts)
+                    self.get_vmis_for_namespace(client, name, namespace, opts)
         else:
             client = get_api_client()
             name = self.get_default_host_name(client.configuration.host)
             namespaces = self.get_available_namespaces(client)
             opts = GetVmiOptions(None, None, None, self.host_format)
             for namespace in namespaces:
-                self.__get_vmis_for_namespace(client, name, namespace, opts)
+                self.get_vmis_for_namespace(client, name, namespace, opts)
 
-    def __get_vmis_for_namespace(self, client, name, namespace, opts):
+    def get_available_namespaces(self, client):
+        v1_namespace = client.resources.get(api_version="v1", kind="Namespace")
+        try:
+            obj = v1_namespace.get()
+        except DynamicApiError as exc:
+            self.display.debug(exc)
+            raise KubeVirtInventoryException(
+                f"Error fetching Namespace list: {self.format_dynamic_api_exc(exc)}"
+            ) from exc
+        return [namespace.metadata.name for namespace in obj.items]
+
+    def get_vmis_for_namespace(self, client, name, namespace, opts):
         vmi_client = client.resources.get(
             api_version=opts.api_version, kind="VirtualMachineInstance"
         )
@@ -237,8 +299,8 @@ class InventoryModule(K8sInventoryModule):
             )
         except DynamicApiError as exc:
             self.display.debug(exc)
-            raise K8sInventoryException(
-                f"Error fetching VirtualMachineInstance list: {format_dynamic_api_exc(exc)}"
+            raise KubeVirtInventoryException(
+                f"Error fetching VirtualMachineInstance list: {self.format_dynamic_api_exc(exc)}"
             ) from exc
 
         namespace_group = f"namespace_{namespace}"
