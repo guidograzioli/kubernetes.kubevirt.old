@@ -327,10 +327,8 @@ def perform_action(svc, definition: Dict, params: Dict) -> Dict:
     # Wait if needed
     success = True
 
-    method = result.get("method")
-    if method == "delete" or method == "create":
-        if params.get("wait") and not svc.module.check_mode:
-            success, instance, result["duration"] = svc.wait(resource, instance)
+    if instance and params.get("wait") and not svc.module.check_mode:
+        success, instance, result["duration"] = svc.wait(resource, instance)
 
     if not success:
         name = instance["metadata"]["name"]
