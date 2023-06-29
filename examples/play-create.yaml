@@ -2,6 +2,7 @@
   tasks:
     - name: Create VM
       kubernetes.kubevirt.kubevirt_vm:
+        state: present
         name: testvm
         namespace: default
         labels:

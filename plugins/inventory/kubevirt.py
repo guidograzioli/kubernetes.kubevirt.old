@@ -1,4 +1,5 @@
 # Copyright (c) 2023 KubeVirt Project
+# Based on the kubernetes.core.k8s inventory
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -6,108 +7,109 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = """
-    name: kubevirt
-    author:
-      - Felix Matouschek (@0xFelix)
+name: kubevirt
 
-    short_description: KubeVirt inventory source
+short_description: KubeVirt inventory source
+    
+author:
+- "Felix Matouschek (@0xFelix)"
 
+description:
+- Fetch running VirtualMachineInstances for one or more namespaces with an optional label selector.
+- Groups by namespace, namespace_vmis and labels.
+- Uses the kubectl connection plugin to access the Kubernetes cluster.
+- Uses kubevirt.(yml|yaml) YAML configuration file to set parameter values.
+
+extends_documentation_fragment:
+- inventory_cache
+- constructed
+
+options:
+  plugin:
+    description: Token that ensures this is a source file for the "kubevirt" plugin.
+    required: True
+    choices: ["kubevirt", "kubernetes.kubevirt.kubevirt"]
+  host_format:
     description:
-      - Fetch running VirtualMachineInstances for one or more namespaces with an optional label selector.
-      - Groups by namespace, namespace_vms and labels.
-      - Uses the kubectl connection plugin to access the Kubernetes cluster.
-      - Uses kubevirt.(yml|yaml) YAML configuration file to set parameter values.
-
-    extends_documentation_fragment:
-      - inventory_cache
-      - constructed
-
-    options:
-      plugin:
-        description: Token that ensures this is a source file for the "kubevirt" plugin.
-        required: True
-        choices: ["kubevirt", "kubernetes.kubevirt.kubevirt"]
-      host_format:
+    - Specify the format of the host in the inventory group. Available specifiers: name, namespace, uid.
+    default: "{namespace}-{name}"
+  connections:
+    description:
+    - Optional list of cluster connection settings. If no connections are provided, the default
+      I(~/.kube/config) and active context will be used, and objects will be returned for all namespaces
+      the active user is authorized to access.
+    suboptions:
+      name:
         description:
-          - Specify the format of the host in the inventory group. Available specifiers: name, namespace, uid.
-        default: "{namespace}-{name}"
-      connections:
+        - Optional name to assign to the cluster. If not provided, a name is constructed from the server
+          and port.
+      kubeconfig:
         description:
-          - Optional list of cluster connection settings. If no connections are provided, the default
-            I(~/.kube/config) and active context will be used, and objects will be returned for all namespaces
-            the active user is authorized to access.
-        suboptions:
-          name:
-            description:
-              - Optional name to assign to the cluster. If not provided, a name is constructed from the server
-                and port.
-          kubeconfig:
-            description:
-              - Path to an existing Kubernetes config file. If not provided, and no other connection
-                options are provided, the Kubernetes client will attempt to load the default
-                configuration file from I(~/.kube/config). Can also be specified via K8S_AUTH_KUBECONFIG
-                environment variable.
-          context:
-            description:
-              - The name of a context found in the config file. Can also be specified via K8S_AUTH_CONTEXT environment
-                variable.
-          host:
-            description:
-              - Provide a URL for accessing the API. Can also be specified via K8S_AUTH_HOST environment variable.
-          api_key:
-            description:
-              - Token used to authenticate with the API. Can also be specified via K8S_AUTH_API_KEY environment
-                variable.
-          username:
-            description:
-              - Provide a username for authenticating with the API. Can also be specified via K8S_AUTH_USERNAME
-                environment variable.
-          password:
-            description:
-              - Provide a password for authenticating with the API. Can also be specified via K8S_AUTH_PASSWORD
-                environment variable.
-          client_cert:
-            description:
-              - Path to a certificate used to authenticate with the API. Can also be specified via K8S_AUTH_CERT_FILE
-                environment variable.
-            aliases: [ cert_file ]
-          client_key:
-            description:
-              - Path to a key file used to authenticate with the API. Can also be specified via K8S_AUTH_KEY_FILE
-                environment variable.
-            aliases: [ key_file ]
-          ca_cert:
-            description:
-              - Path to a CA certificate used to authenticate with the API. Can also be specified via
-                K8S_AUTH_SSL_CA_CERT environment variable.
-            aliases: [ ssl_ca_cert ]
-          validate_certs:
-            description:
-              - Whether or not to verify the API server's SSL certificates. Can also be specified via
-                K8S_AUTH_VERIFY_SSL environment variable.
-            type: bool
-            aliases: [ verify_ssl ]
-          namespaces:
-            description:
-              - List of namespaces. If not specified, will fetch all VirtualMachineInstances for all namespaces
-                the user is authorized to access.
-          label_selector:
-            description:
-              - Define a label selector to select a subset of the fetched VirtualMachineInstances.
-          network_name:
-            description:
-              - In case multiple networks are attached to a VirtualMachineInstance, define which interface should
-                be returned as primary IP address.
-            aliases: [ interface_name ]
-          api_version:
-            description:
-              - Specify the used KubeVirt API version.
-            default: "kubevirt.io/v1"
+        - Path to an existing Kubernetes config file. If not provided, and no other connection
+          options are provided, the Kubernetes client will attempt to load the default
+          configuration file from I(~/.kube/config). Can also be specified via K8S_AUTH_KUBECONFIG
+          environment variable.
+      context:
+        description:
+        - The name of a context found in the config file. Can also be specified via K8S_AUTH_CONTEXT environment
+          variable.
+      host:
+        description:
+        - Provide a URL for accessing the API. Can also be specified via K8S_AUTH_HOST environment variable.
+      api_key:
+        description:
+        - Token used to authenticate with the API. Can also be specified via K8S_AUTH_API_KEY environment
+          variable.
+      username:
+        description:
+        - Provide a username for authenticating with the API. Can also be specified via K8S_AUTH_USERNAME
+          environment variable.
+      password:
+        description:
+        - Provide a password for authenticating with the API. Can also be specified via K8S_AUTH_PASSWORD
+          environment variable.
+      client_cert:
+        description:
+        - Path to a certificate used to authenticate with the API. Can also be specified via K8S_AUTH_CERT_FILE
+          environment variable.
+        aliases: [ cert_file ]
+      client_key:
+        description:
+        - Path to a key file used to authenticate with the API. Can also be specified via K8S_AUTH_KEY_FILE
+          environment variable.
+        aliases: [ key_file ]
+      ca_cert:
+        description:
+        - Path to a CA certificate used to authenticate with the API. Can also be specified via
+          K8S_AUTH_SSL_CA_CERT environment variable.
+      aliases: [ ssl_ca_cert ]
+      validate_certs:
+        description:
+        - Whether or not to verify the API server's SSL certificates. Can also be specified via
+          K8S_AUTH_VERIFY_SSL environment variable.
+        type: bool
+        aliases: [ verify_ssl ]
+      namespaces:
+        description:
+        - List of namespaces. If not specified, will fetch all VirtualMachineInstances for all namespaces
+          the user is authorized to access.
+      label_selector:
+        description:
+        - Define a label selector to select a subset of the fetched VirtualMachineInstances.
+      network_name:
+        description:
+        - In case multiple networks are attached to a VirtualMachineInstance, define which interface should
+          be returned as primary IP address.
+        aliases: [ interface_name ]
+      api_version:
+        description:
+        - Specify the used KubeVirt API version.
+        default: "kubevirt.io/v1"
 
-    requirements:
-    - "python >= 3.8"
-    - "kubernetes >= 12.0.0"
-    - "PyYAML >= 3.11"
+requirements:
+- "python >= 3.6"
+- "kubernetes >= 12.0.0"
+- "PyYAML >= 3.11"
 """
 
 EXAMPLES = """
@@ -116,31 +118,31 @@ EXAMPLES = """
 # Authenticate with token, and return all VirtualMachineInstances for all accessible namespaces
 plugin: kubernetes.kubevirt.kubevirt
 connections:
-  - host: https://192.168.64.4:8443
-    api_key: xxxxxxxxxxxxxxxx
-    validate_certs: false
+- host: https://192.168.64.4:8443
+  api_key: xxxxxxxxxxxxxxxx
+  validate_certs: false
 
 # Use default config (~/.kube/config) file and active context, and return VirtualMachineInstances
-# from namespace testing with interfaces connected to network myovsnetwork
+# from namespace testing with interfaces connected to network bridge-network
 plugin: kubernetes.kubevirt.kubevirt
 connections:
-  - namespaces:
-      - testing
-    network_name: myovsnetwork
+- namespaces:
+    - testing
+  network_name: bridge-network
 
 # Use default config (~/.kube/config) file and active context, and return VirtualMachineInstances
-# from namespace testing with label app=foo
+# from namespace testing with label app=test
 plugin: kubernetes.kubevirt.kubevirt
 connections:
-  - namespaces:
-      - testing
-    label_selector: app=foo
+- namespaces:
+    - testing
+  label_selector: app=test
 
 # Use a custom config file, and a specific context.
 plugin: kubernetes.kubevirt.kubevirt
 connections:
-  - kubeconfig: /path/to/config
-    context: 'awx/192-168-64-4:8443/developer'
+- kubeconfig: /path/to/config
+  context: 'awx/192-168-64-4:8443/developer'
 """
 
 from dataclasses import dataclass
@@ -167,7 +169,9 @@ class KubeVirtInventoryException(Exception):
 
 @dataclass
 class GetVmiOptions:
-    """This class holds the options defined by the user."""
+    """
+    This class holds the options defined by the user.
+    """
 
     api_version: str
     label_selector: str
@@ -182,7 +186,9 @@ class GetVmiOptions:
 
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
-    """This class implements the actual inventory module."""
+    """
+    This class implements the actual inventory module.
+    """
 
     NAME = "kubernetes.kubevirt.kubevirt"
 
@@ -191,6 +197,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     @staticmethod
     def get_default_host_name(host):
+        """
+        get_default_host_name strips URL schemes from the host name and
+        replaces invalid characters.
+        """
         return (
             host.replace("https://", "")
             .replace("http://", "")
@@ -200,6 +210,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
     @staticmethod
     def format_dynamic_api_exc(exc):
+        """
+        format_dynamic_api_exc tries to extract the message from the JSON body
+        of a DynamicException.
+        """
         if exc.body:
             if exc.headers and exc.headers.get("Content-Type") == "application/json":
                 message = loads(exc.body).get("message")
@@ -214,11 +228,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.host_format = None
 
     def verify_file(self, path):
+        """
+        verify_file ensures the inventory file is compatible with this plugin.
+        """
         return super().verify_file(path) and path.endswith(
             ("kubevirt.yml", "kubevirt.yaml")
         )
 
     def parse(self, inventory, loader, path, cache=True):
+        """
+        parse runs basic setup of the inventory.
+        """
         super().parse(inventory, loader, path)
         cache_key = self._get_cache_prefix(path)
         config_data = self._read_config_data(path)
@@ -226,11 +246,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.setup(config_data, cache, cache_key)
 
     def setup(self, config_data, cache, cache_key):
+        """
+        setup checks for availability of the Kubernetes Python client,
+        gets the configured connections and runs fetch_objects on them.
+        If there is a cache it is returned instead.
+        """
         connections = config_data.get("connections")
 
         if not HAS_K8S_MODULE_HELPER:
             raise KubeVirtInventoryException(
-                f"This module requires the Kubernetes Python client. Try `pip install kubernetes`. Detail: {k8s_import_exception}"
+                "This module requires the Kubernetes Python client. "
+                + f"Try `pip install kubernetes`. Detail: {k8s_import_exception}"
             )
 
         source_data = None
@@ -244,6 +270,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self.fetch_objects(connections)
 
     def fetch_objects(self, connections):
+        """
+        fetch_objects populates the inventory with every configured connection.
+        """
         if connections:
             if not isinstance(connections, list):
                 raise KubeVirtInventoryException("Expecting connections to be a list.")
@@ -279,6 +308,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 self.get_vmis_for_namespace(client, name, namespace, opts)
 
     def get_available_namespaces(self, client):
+        """
+        get_available_namespaces lists all namespaces accessible with the
+        configured credentials and returns them.
+        """
         v1_namespace = client.resources.get(api_version="v1", kind="Namespace")
         try:
             obj = v1_namespace.get()
@@ -290,6 +323,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         return [namespace.metadata.name for namespace in obj.items]
 
     def get_vmis_for_namespace(self, client, name, namespace, opts):
+        """
+        get_vmis_for_namespace lists all VirtualMachineInstances in a namespace
+        and adds groups and hosts to the inventory.
+        """
         vmi_client = client.resources.get(
             api_version=opts.api_version, kind="VirtualMachineInstance"
         )
@@ -447,11 +484,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 vmi_name, "vmi_volume_status", vmi_volume_status
             )
 
-    # Replace this with ResourceField.to_dict() once available in a stable release of
-    # the Kubernetes Python client
-    # See
-    # https://github.com/kubernetes-client/python/blob/main/kubernetes/base/dynamic/resource.py#L393
     def __resource_field_to_dict(self, field):
+        """
+        Replace this with ResourceField.to_dict() once available in a stable release of
+        the Kubernetes Python client
+        See
+        https://github.com/kubernetes-client/python/blob/main/kubernetes/base/dynamic/resource.py#L393
+        """
         if isinstance(field, ResourceField):
             return {
                 k: self.__resource_field_to_dict(v) for k, v in field.__dict__.items()

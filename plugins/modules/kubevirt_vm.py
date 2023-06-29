@@ -122,11 +122,11 @@ options:
     type: int
 
 requirements:
-  - "python >= 3.6"
-  - "kubernetes >= 12.0.0"
-  - "PyYAML >= 3.11"
-  - "jsonpatch"
-  - "jinja2"
+- "python >= 3.6"
+- "kubernetes >= 12.0.0"
+- "PyYAML >= 3.11"
+- "jsonpatch"
+- "jinja2"
 """
 
 EXAMPLES = """
@@ -135,12 +135,8 @@ EXAMPLES = """
      state: present
      name: testvm
      namespace: default
-     annotations:
-       a: b
-       1: "2"
      labels:
-       c: d
-       3: "4"
+       app: test
      instancetype: u1.medium
      preference: fedora
      interfaces:
