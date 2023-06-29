@@ -1,4 +1,5 @@
 # Copyright (c) 2023 KubeVirt Project
+# Based on the kubernetes.core.k8s module
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -6,19 +7,18 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 DOCUMENTATION = """
-
 module: kubevirt_vm
 
-short_description: Create or delete KubeVirt VMs on Kubernetes
+short_description: Create or delete KubeVirt VirtualMachines on Kubernetes
 
 author:
-    - "Felix Matouschek (@0xFelix)"
+- "Felix Matouschek (@0xFelix)"
 
 description:
-  - Use the Kubernetes Python client to perform create or delete operations on KubeVirt VMs.
-  - Pass options to create the VM as module arguments.
-  - Authenticate using either a config file, certificates, password or token.
-  - Supports check mode.
+- Use the Kubernetes Python client to perform create or delete operations on KubeVirt VirtualMachines.
+- Pass options to create the VirtualMachine as module arguments.
+- Authenticate using either a config file, certificates, password or token.
+- Supports check mode.
 
 extends_documentation_fragment:
 - kubernetes.core.k8s_auth_options
@@ -26,9 +26,9 @@ extends_documentation_fragment:
 options:
   state:
     description:
-    - Determines if a virtual machine should be created or deleted. When set to C(present), a virtual machine
-      will be created, if it does not already exist. If set to C(absent), an existing virtual machine will be
-      deleted. If set to C(present) and attributes of an existing virtual machine differ from from those specified
+    - Determines if a VirtualMachine should be created or deleted. When set to C(present), a VirtualMachine
+      will be created, if it does not already exist. If set to C(absent), an existing VirtualMachine will be
+      deleted. If set to C(present) and attributes of an existing VirtualMachine differ from from those specified
       an error is raised.
     type: str
     default: present
@@ -40,38 +40,38 @@ options:
     default: kubevirt.io/v1
   name:
     description:
-    - Specify the name of the virtual machine.
+    - Specify the name of the VirtualMachine.
     - This option is ignored when I(state) is not set to C(present).
     - mutually exclusive with C(generate_name).
     type: str
   generate_name:
     description:
-    - Specify the basis of the virtual machine name and random characters will be added automatically on server to
+    - Specify the basis of the VirtualMachine name and random characters will be added automatically on server to
       generate a unique name.
     - Only used when I(state=present).
     - mutually exclusive with C(name).
     type: str
   namespace:
     description:
-    - Specify the name of the virtual machine.
+    - Specify the name of the VirtualMachine.
     type: str
   annotations:
     description:
-    - Specify annotations to set on the virtual machine.
+    - Specify annotations to set on the VirtualMachine.
     - Only used when I(state=present).
     type: dict
   labels:
     description:
-    - Specify labels to set on the virtual machine.
+    - Specify labels to set on the VirtualMachine.
     type: dict
   instancetype:
     description:
-    - Specify the instancetype of the virtual machine.
+    - Specify the instancetype of the VirtualMachine.
     - Only used when I(state=present).
     type: str
   preference:
     description:
-    - Specify the preference of the virtual machine.
+    - Specify the preference of the VirtualMachine.
     - Only used when I(state=present).
     type: str
   infer_from_volume:
@@ -90,17 +90,17 @@ options:
         type: str
   interfaces:
     description:
-    - Specify the interfaces of the virtual machine.
+    - Specify the interfaces of the VirtualMachine.
     - See: https://kubevirt.io/api-reference/main/definitions.html#_v1_interface
     type: list
   networks:
     description:
-    - Specify the networks of the virtual machine.
+    - Specify the networks of the VirtualMachine.
     - See: https://kubevirt.io/api-reference/main/definitions.html#_v1_network
     type: list
   volumes:
     description:
-    - Specify the volumes of the virtual machine.
+    - Specify the volumes of the VirtualMachine.
     - See: https://kubevirt.io/api-reference/main/definitions.html#_v1_volume
     type: list
   wait:
@@ -126,10 +126,11 @@ requirements:
   - "kubernetes >= 12.0.0"
   - "PyYAML >= 3.11"
   - "jsonpatch"
+  - "jinja2"
 """
 
 EXAMPLES = """
-- name: Create a virtual machine
+- name: Create a VirtualMachine
   kubernetes.kubevirt.kubevirt_vm:
      state: present
      name: testvm
@@ -165,7 +166,7 @@ EXAMPLES = """
              - ssh-ed25519 AAAA...
        name: cloudinit
 
-- name: Delete a virtual machine
+- name: Delete a VirtualMachine
   kubernetes.kubevirt.kubevirt_vm:
     name: testvm
     namespace: default
@@ -176,8 +177,21 @@ RETURN = """
 result:
   description:
   - The created object. Will be empty in the case of a deletion.
-  returned: success
-  type: str
+  type: complex
+  contains:
+     changed:
+       description: Whether the VirtualMachine was changed
+       type: bool
+       sample: True
+     duration:
+       description: elapsed time of task in seconds
+       returned: when C(wait) is true
+       type: int
+       sample: 48
+     method:
+       description: Method executed on the Kubernetes API.
+       returned: success
+       type: str
 """
 
 from typing import Dict
@@ -287,7 +301,7 @@ def perform_action(svc, definition: Dict, params: Dict) -> Dict:
     result = {"changed": False}
     instance = {}
 
-    # Dynamically lookup CRD
+    # Dynamically lookup CRD and fill in correct kind and apiVersion
     resource = svc.find_resource(
         definition.get("kind"), definition.get("apiVersion"), fail=True
     )
@@ -328,7 +342,7 @@ def perform_action(svc, definition: Dict, params: Dict) -> Dict:
     if not success:
         name = instance["metadata"]["name"]
         raise ResourceTimeout(
-            f'"{resource.kind}" "{name}": Timed out waiting on resource',
+            f'"{resource.kind}" "{name}": Timed out waiting on VirtualMachine',
             result,
         )
 
@@ -351,7 +365,7 @@ def compare_existing(definition: Dict, result: Dict, existing: Dict, svc, resour
     # Catch exception if apply fails and return early
     except CoreException as exc:
         raise CoreException(
-            f'"{resource.kind}" "{name}": Object already exists',
+            f'"{resource.kind}" "{name}": VirtualMachine already exists',
             result,
         ) from exc
     svc.client.dry_run = old_dry_run
@@ -373,7 +387,7 @@ def compare_existing(definition: Dict, result: Dict, existing: Dict, svc, resour
 
     if not match:
         raise CoreException(
-            f'"{resource.kind}" "{name}": Object already exists',
+            f'"{resource.kind}" "{name}": VirtualMachine already exists',
             result,
         )
 
