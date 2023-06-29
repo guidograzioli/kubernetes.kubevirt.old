@@ -21,8 +21,7 @@ description:
   - Supports check mode.
 
 extends_documentation_fragment:
-  - kubernetes.core.k8s_auth_options
-  - kubernetes.core.k8s_wait_options
+- kubernetes.core.k8s_auth_options
 
 options:
   state:
@@ -104,6 +103,23 @@ options:
     - Specify the volumes of the virtual machine.
     - See: https://kubevirt.io/api-reference/main/definitions.html#_v1_volume
     type: list
+  wait:
+    description:
+    - Whether to wait for the VirtualMachine to end up in the ready state.
+    type: bool
+    default: no
+  wait_sleep:
+    description:
+    - Number of seconds to sleep between checks.
+    - Ignored if C(wait) is not set.
+    default: 5
+    type: int
+  wait_timeout:
+    description:
+    - How long in seconds to wait for the resource to end up in the desired state.
+    - Ignored if C(wait) is not set.
+    default: 120
+    type: int
 
 requirements:
   - "python >= 3.6"
@@ -175,7 +191,6 @@ from ansible_collections.kubernetes.core.plugins.module_utils.ansiblemodule impo
 )
 from ansible_collections.kubernetes.core.plugins.module_utils.args_common import (
     AUTH_ARG_SPEC,
-    WAIT_ARG_SPEC,
 )
 from ansible_collections.kubernetes.core.plugins.module_utils.k8s import (
     runner,
@@ -401,9 +416,11 @@ def arg_spec() -> Dict:
         "interfaces": {"type": "list", "element": "dict"},
         "networks": {"type": "list", "element": "dict"},
         "volumes": {"type": "list", "element": "dict"},
+        "wait": {"type": "bool", "default": False},
+        "wait_sleep": {"type": "int", "default": 5},
+        "wait_timeout": {"type": "int", "default": 120},
     }
     spec.update(copy.deepcopy(AUTH_ARG_SPEC))
-    spec.update(copy.deepcopy(WAIT_ARG_SPEC))
 
     return spec
 
@@ -425,7 +442,12 @@ def main():
         required_together=[("interfaces", "networks")],
         supports_check_mode=True,
     )
+
+    # Set resource_definition to our rendered template
     module.params["resource_definition"] = render_template(module.params)
+
+    # Set wait_condition to allow waiting for the ready state of the VirtualMachine
+    module.params["wait_condition"] = {"type": "Ready", "status": True}
 
     # Override the perform_action func of kubernetes.core with our own
     runner.perform_action = perform_action
