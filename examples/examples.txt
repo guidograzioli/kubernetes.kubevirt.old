@@ -1,0 +1,5 @@
+ansible-playbook play-create.yml
+ansible-inventory -i inventory.kubevirt.yml --list | less
+ansible -i inventory.kubevirt.yml -u fedora all -m setup | less
+ansible -i inventory.kubevirt.yml -u fedora all -m command -a 'echo This is run on the VM'
+ansible-playbook play-delete.yml
