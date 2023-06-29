@@ -29,6 +29,6 @@
               #cloud-config
               # The default username is: fedora
               ssh_authorized_keys:
-                - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGufeBJX3rh5+CbqgYMDo8Z08+r7uYbTfSTG4mnRbPcJ
+                - ssh-ed25519 AAAA...
           name: cloudinit
         wait: yes

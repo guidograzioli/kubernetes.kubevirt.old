@@ -127,7 +127,7 @@ connections:
 plugin: kubernetes.kubevirt.kubevirt
 connections:
 - namespaces:
-    - testing
+  - testing
   network_name: bridge-network
 
 # Use default config (~/.kube/config) file and active context, and return VirtualMachineInstances
@@ -135,7 +135,7 @@ connections:
 plugin: kubernetes.kubevirt.kubevirt
 connections:
 - namespaces:
-    - testing
+  - testing
   label_selector: app=test
 
 # Use a custom config file, and a specific context.

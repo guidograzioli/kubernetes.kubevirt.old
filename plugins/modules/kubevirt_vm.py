@@ -132,35 +132,35 @@ requirements:
 EXAMPLES = """
 - name: Create a VirtualMachine
   kubernetes.kubevirt.kubevirt_vm:
-     state: present
-     name: testvm
-     namespace: default
-     labels:
-       app: test
-     instancetype: u1.medium
-     preference: fedora
-     interfaces:
-     - name: default
-       masquerade: {}
-     - name: bridge-network
-       bridge: {}
-     networks:
-     - name: default
-       pod: {}
-     - name: bridge-network
-       multus:
-         networkName: kindexgw
-     volumes:
-     - containerDisk:
-         image: quay.io/containerdisks/fedora:latest
-       name: containerdisk
-     - cloudInitNoCloud:
-         userData: |-
-           #cloud-config
-           # The default username is: fedora
-           ssh_authorized_keys:
-             - ssh-ed25519 AAAA...
-       name: cloudinit
+    state: present
+    name: testvm
+    namespace: default
+    labels:
+      app: test
+    instancetype: u1.medium
+    preference: fedora
+    interfaces:
+    - name: default
+      masquerade: {}
+    - name: bridge-network
+      bridge: {}
+    networks:
+    - name: default
+      pod: {}
+    - name: bridge-network
+      multus:
+        networkName: kindexgw
+    volumes:
+    - containerDisk:
+        image: quay.io/containerdisks/fedora:latest
+      name: containerdisk
+    - cloudInitNoCloud:
+        userData: |-
+          #cloud-config
+          # The default username is: fedora
+          ssh_authorized_keys:
+            - ssh-ed25519 AAAA...
+      name: cloudinit
 
 - name: Delete a VirtualMachine
   kubernetes.kubevirt.kubevirt_vm:
@@ -175,19 +175,19 @@ result:
   - The created object. Will be empty in the case of a deletion.
   type: complex
   contains:
-     changed:
-       description: Whether the VirtualMachine was changed
-       type: bool
-       sample: True
-     duration:
-       description: elapsed time of task in seconds
-       returned: when C(wait) is true
-       type: int
-       sample: 48
-     method:
-       description: Method executed on the Kubernetes API.
-       returned: success
-       type: str
+    changed:
+      description: Whether the VirtualMachine was changed
+      type: bool
+      sample: True
+    duration:
+      description: elapsed time of task in seconds
+      returned: when C(wait) is true
+      type: int
+      sample: 48
+    method:
+      description: Method executed on the Kubernetes API.
+      returned: success
+      type: str
 """
 
 from typing import Dict
