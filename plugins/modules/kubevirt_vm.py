@@ -383,16 +383,12 @@ def render_template(params: Dict) -> str:
     render_template uses Jinja2 to render the VM_TEMPLATE into a string.
     """
     env = Environment(autoescape=False, trim_blocks=True, lstrip_blocks=True)
-    env.filters["to_yaml"] = to_yaml
+    env.filters["to_yaml"] = lambda data, *_, **kw: yaml.dump(
+        data, allow_unicode=True, default_flow_style=False, **kw
+    )
+
     template = env.from_string(VM_TEMPLATE.strip())
     return template.render(params)
-
-
-def to_yaml(data, *_, **kw):
-    """
-    to_yaml is used as filter in the VM_TEMPLATE to dump objects to YAML.
-    """
-    return yaml.dump(data, allow_unicode=True, default_flow_style=False, **kw)
 
 
 def arg_spec() -> Dict:
