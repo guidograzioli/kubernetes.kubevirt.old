@@ -3,15 +3,12 @@
         "hostvars": {
             "default-vm-cirros": {
                 "annotations": {
-                    "ansible": "{\"data1\": \"yes\", \"data2\": \"no\"}",
                     "kubevirt.io/latest-observed-api-version": "v1",
                     "kubevirt.io/storage-observed-api-version": "v1alpha3"
                 },
                 "ansible_connection": "ssh",
                 "ansible_host": "10.244.196.152",
                 "cluster_name": null,
-                "data1": "yes",
-                "data2": "no",
                 "labels": {
                     "kubevirt.io/nodeName": "node01",
                     "kubevirt.io/vm": "vm-cirros"
@@ -93,10 +90,10 @@
     },
     "all": {
         "children": [
-            "label_kubevirt_io_nodeName_node01",
-            "label_kubevirt_io_vm_vm_cirros",
+            "ungrouped",
             "localhost_12345",
-            "ungrouped"
+            "label_kubevirt_io_nodeName_node01",
+            "label_kubevirt_io_vm_vm_cirros"
         ]
     },
     "label_kubevirt_io_nodeName_node01": {

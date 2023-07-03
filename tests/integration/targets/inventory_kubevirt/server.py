@@ -152,7 +152,6 @@ if __name__ == "__main__":
                     "kind": "VirtualMachineInstance",
                     "metadata": {
                         "annotations": {
-                            "ansible": '{"data1": "yes", "data2": "no"}',
                             "kubevirt.io/latest-observed-api-version": "v1",
                             "kubevirt.io/storage-observed-api-version": "v1alpha3",
                         },
