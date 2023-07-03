@@ -22,17 +22,10 @@ description:
 
 extends_documentation_fragment:
 - kubernetes.core.k8s_auth_options
+- kubernetes.core.k8s_state_options
+- kubernetes.core.k8s_delete_options
 
 options:
-  state:
-    description:
-    - Determines if a VirtualMachine should be created or deleted. When set to C(present), a VirtualMachine
-      will be created, if it does not already exist. If set to C(absent), an existing VirtualMachine will be
-      deleted. If set to C(present) and attributes of an existing VirtualMachine differ from from those specified
-      an error is raised.
-    type: str
-    default: present
-    choices: [ absent, present ]
   api_version:
     description:
     - Use this to set the API version of KubeVirt.
@@ -191,7 +184,7 @@ result:
 """
 
 from typing import Dict
-import copy
+from copy import deepcopy
 import yaml
 
 from jinja2 import Environment
@@ -201,6 +194,8 @@ from ansible_collections.kubernetes.core.plugins.module_utils.ansiblemodule impo
 )
 from ansible_collections.kubernetes.core.plugins.module_utils.args_common import (
     AUTH_ARG_SPEC,
+    COMMON_ARG_SPEC,
+    DELETE_OPTS_ARG_SPEC,
 )
 from ansible_collections.kubernetes.core.plugins.module_utils.k8s import (
     runner,
@@ -301,7 +296,6 @@ def arg_spec() -> Dict:
     arg_spec defines the argument spec of this module.
     """
     spec = {
-        "state": {"default": "present", "choices": ["present", "absent"]},
         "api_version": {"default": "kubevirt.io/v1"},
         "name": {},
         "generate_name": {},
@@ -321,7 +315,13 @@ def arg_spec() -> Dict:
         "wait_sleep": {"type": "int", "default": 5},
         "wait_timeout": {"type": "int", "default": 120},
     }
-    spec.update(copy.deepcopy(AUTH_ARG_SPEC))
+    spec.update(deepcopy(AUTH_ARG_SPEC))
+    spec.update(deepcopy(COMMON_ARG_SPEC))
+    spec["delete_options"] = {
+        "type": "dict",
+        "default": None,
+        "options": deepcopy(DELETE_OPTS_ARG_SPEC),
+    }
 
     return spec
 
