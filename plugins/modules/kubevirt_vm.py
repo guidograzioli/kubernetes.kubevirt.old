@@ -57,6 +57,11 @@ options:
     description:
     - Specify labels to set on the VirtualMachine.
     type: dict
+  running:
+    description:
+    - Specify whether the VirtualMachine should be running.
+    type: bool
+    default: yes
   instancetype:
     description:
     - Specify the instancetype of the VirtualMachine.
@@ -245,7 +250,7 @@ spec:
     inferFromVolume: "{{ infer_from_volume.preference }}"
     {% endif %}
   {% endif %}
-  running: true
+  running: {{ running }}
   template:
     {% if annotations or labels %}
     metadata:
@@ -302,6 +307,7 @@ def arg_spec() -> Dict:
         "namespace": {"required": True},
         "annotations": {"type": "dict"},
         "labels": {"type": "dict"},
+        "running": {"type": "bool", "default": True},
         "instancetype": {},
         "preference": {},
         "infer_from_volume": {
