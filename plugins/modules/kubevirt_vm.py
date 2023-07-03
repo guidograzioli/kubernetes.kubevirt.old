@@ -210,10 +210,6 @@ from ansible_collections.kubernetes.core.plugins.module_utils.k8s.core import (
 )
 from ansible_collections.kubernetes.core.plugins.module_utils.k8s.exceptions import (
     CoreException,
-    ResourceTimeout,
-)
-from ansible_collections.kubernetes.core.plugins.module_utils.k8s.service import (
-    diff_objects,
 )
 
 VM_TEMPLATE = """
@@ -287,102 +283,6 @@ spec:
 """
 
 
-def perform_action(svc, definition: Dict, params: Dict) -> Dict:
-    """
-    perform_action creates or deletes objects on the Kubernetes API.
-
-    This is stripped down version of
-    ansible_collections.kubernetes.core.plugins.module_utils.k8s.runner.perform_action
-    """
-    result = {"changed": False}
-    instance = {}
-
-    # Dynamically lookup CRD and fill in correct kind and apiVersion
-    resource = svc.find_resource(
-        definition.get("kind"), definition.get("apiVersion"), fail=True
-    )
-    definition["kind"] = resource.kind
-    definition["apiVersion"] = resource.group_version
-
-    # Retrieve potentially already existing object
-    existing = svc.retrieve(resource, definition)
-
-    if params.get("state", None) == "absent":
-        # Delete object
-        instance = svc.delete(resource, definition, existing)
-        result["method"] = "delete"
-        if existing:
-            result["changed"] = True
-    else:
-        if not existing:
-            # Create object
-            instance = svc.create(resource, definition)
-            result["result"] = instance
-            result["method"] = "create"
-            result["changed"] = True
-        else:
-            # Do a best effort comparison so the module might return success with no changes
-            compare_existing(definition, result, existing, svc, resource)
-
-    # Wait if needed
-    success = True
-
-    if instance and params.get("wait") and not svc.module.check_mode:
-        success, instance, result["duration"] = svc.wait(resource, instance)
-
-    if not success:
-        name = instance["metadata"]["name"]
-        raise ResourceTimeout(
-            f'"{resource.kind}" "{name}": Timed out waiting on VirtualMachine',
-            result,
-        )
-
-    return result
-
-
-def compare_existing(definition: Dict, result: Dict, existing: Dict, svc, resource):
-    """
-    compare_existing tries to do a best effort comparison to potentially allow
-    the module to return success without changes
-    """
-    old = copy.deepcopy(existing.to_dict())
-    name = definition["metadata"]["name"]
-
-    # Dry-run apply the new definition to receive all changes from mutating admitters
-    old_dry_run = svc.client.dry_run
-    svc.client.dry_run = True
-    try:
-        new = svc.apply(resource, definition)
-    # Catch exception if apply fails and return early
-    except CoreException as exc:
-        raise CoreException(
-            f'"{resource.kind}" "{name}": VirtualMachine already exists',
-            result,
-        ) from exc
-    svc.client.dry_run = old_dry_run
-
-    # Clear fields which will never be idempotent
-    del old["metadata"]
-    del new["metadata"]
-    del old["status"]
-    del new["status"]
-
-    match, diffs = diff_objects(old, new)
-    if match and diffs:
-        result.setdefault("warnings", []).append(
-            "No meaningful diff was generated, but the API may not be idempotent"
-        )
-
-    if diffs:
-        result["diff"] = diffs
-
-    if not match:
-        raise CoreException(
-            f'"{resource.kind}" "{name}": VirtualMachine already exists',
-            result,
-        )
-
-
 def render_template(params: Dict) -> str:
     """
     render_template uses Jinja2 to render the VM_TEMPLATE into a string.
@@ -450,8 +350,6 @@ def main():
     # Set wait_condition to allow waiting for the ready state of the VirtualMachine
     module.params["wait_condition"] = {"type": "Ready", "status": True}
 
-    # Override the perform_action func of kubernetes.core with our own
-    runner.perform_action = perform_action
     try:
         runner.run_module(module)
     except CoreException as exc:
