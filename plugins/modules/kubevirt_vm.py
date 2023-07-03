@@ -62,6 +62,12 @@ options:
     - Specify whether the VirtualMachine should be running.
     type: bool
     default: yes
+  termination_grace_period:
+    description:
+    - Specify the termination grace period of the VirtualMachine to provide
+      time for shutting down the guest.
+    type: int
+    default: 180
   instancetype:
     description:
     - Specify the instancetype of the VirtualMachine.
@@ -302,6 +308,7 @@ spec:
       volumes:
       {{ volumes | to_yaml | indent(6) }}
       {%- endif %}
+      terminationGracePeriodSeconds: {{ termination_grace_period }}
 """
 
 
@@ -330,6 +337,7 @@ def arg_spec() -> Dict:
         "annotations": {"type": "dict"},
         "labels": {"type": "dict"},
         "running": {"type": "bool", "default": True},
+        "termination_grace_period": {"type": "int", "default": 180},
         "instancetype": {},
         "preference": {},
         "infer_from_volume": {
