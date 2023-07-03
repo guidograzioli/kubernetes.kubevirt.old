@@ -86,6 +86,22 @@ options:
         description:
         - Name of the volume to infer the preference from.
         type: str
+  clear_revision_name:
+    description:
+    - Specify to clear the revision name of the instancetype or preference.
+    - Only used when I(state=present).
+    type: dict
+    suboptions:
+      instancetype:
+        description:
+        - Clear the revision name of the instancetype.
+        type: bool
+        default: no
+      preference:
+        description:
+        - Clear the revision name of the preference.
+        type: bool
+        default: no
   interfaces:
     description:
     - Specify the interfaces of the VirtualMachine.
@@ -240,6 +256,9 @@ spec:
     {% if infer_from_volume.instancetype %}
     inferFromVolume: "{{ infer_from_volume.instancetype }}"
     {% endif %}
+    {% if clear_revision_name.instancetype %}
+    revisionName: ""
+    {% endif %}
   {% endif %}
   {% if preference or infer_from_volume.preference %}
   preference:
@@ -248,6 +267,9 @@ spec:
     {% endif %}
     {% if infer_from_volume.preference %}
     inferFromVolume: "{{ infer_from_volume.preference }}"
+    {% endif %}
+    {% if clear_revision_name.preference %}
+    revisionName: ""
     {% endif %}
   {% endif %}
   running: {{ running }}
@@ -313,6 +335,13 @@ def arg_spec() -> Dict:
         "infer_from_volume": {
             "type": "dict",
             "options": {"instancetype": {}, "preference": {}},
+        },
+        "clear_revision_name": {
+            "type": "dict",
+            "options": {
+                "instancetype": {"type": "bool", "default": False},
+                "preference": {"type": "bool", "default": False},
+            },
         },
         "interfaces": {"type": "list", "element": "dict"},
         "networks": {"type": "list", "element": "dict"},
