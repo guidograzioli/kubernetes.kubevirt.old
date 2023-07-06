@@ -111,17 +111,17 @@ options:
   interfaces:
     description:
     - Specify the interfaces of the VirtualMachine.
-    - See: https://kubevirt.io/api-reference/main/definitions.html#_v1_interface
+    - 'See: https://kubevirt.io/api-reference/main/definitions.html#_v1_interface'
     type: list
   networks:
     description:
     - Specify the networks of the VirtualMachine.
-    - See: https://kubevirt.io/api-reference/main/definitions.html#_v1_network
+    - 'See: https://kubevirt.io/api-reference/main/definitions.html#_v1_network'
     type: list
   volumes:
     description:
     - Specify the volumes of the VirtualMachine.
-    - See: https://kubevirt.io/api-reference/main/definitions.html#_v1_volume
+    - 'See: https://kubevirt.io/api-reference/main/definitions.html#_v1_volume'
     type: list
   wait:
     description:

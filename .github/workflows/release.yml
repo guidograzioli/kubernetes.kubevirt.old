@@ -57,7 +57,7 @@ jobs:
       - name: Create changelog and documentation
         uses: ansible-middleware/collection-docs-action@main
         with:
-          collection_fqcn: kubernetes.kubevirt
+          collection_fqcn: guidograzioli.kubevirt
           collection_repo: guidograzioli/kubevirt
           dependencies: false
           commit_changelog: true
