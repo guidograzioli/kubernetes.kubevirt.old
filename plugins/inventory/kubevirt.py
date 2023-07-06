@@ -31,7 +31,7 @@ options:
     choices: ["kubevirt", "kubernetes.kubevirt.kubevirt"]
   host_format:
     description:
-    - Specify the format of the host in the inventory group. Available specifiers: name, namespace, uid.
+    - 'Specify the format of the host in the inventory group. Available specifiers: name, namespace, uid.'
     default: "{namespace}-{name}"
   connections:
     description:
@@ -82,7 +82,7 @@ options:
         description:
         - Path to a CA certificate used to authenticate with the API. Can also be specified via
           K8S_AUTH_SSL_CA_CERT environment variable.
-      aliases: [ ssl_ca_cert ]
+        aliases: [ ssl_ca_cert ]
       validate_certs:
         description:
         - Whether or not to verify the API server's SSL certificates. Can also be specified via
