@@ -42,6 +42,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r ansible_collections/guidograzioli/kubevirt/docs/requirements.txt
           pip install -r ansible_collections/guidograzioli/kubevirt/requirements.txt
+          ansible-galaxy collection install -r ansible_collections/guidograzioli/kubevirt/requirements.yml -p /home/runner/.ansible/collections --force-with-deps
           sudo apt install -y sed hub
 
       - name: Create default collection path
