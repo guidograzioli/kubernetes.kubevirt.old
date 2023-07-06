@@ -25,6 +25,16 @@ documentation: https://github.com/0xFelix/kubernetes.kubevirt/tree/main/docs
 homepage: https://github.com/0xFelix/kubernetes.kubevirt
 issues: https://github.com/0xFelix/kubernetes.kubevirt/issues
 build_ignore:
-# https://docs.ansible.com/ansible/devel/dev_guide/developing_collections_distributing.html#ignoring-files-and-folders
   - .gitignore
   - changelogs/.plugin-cache.yaml
+  - .github
+  - .ansible-lint
+  - .yamllint
+  - '*.tar.gz'
+  - '*.zip'
+  - molecule
+  - changelogs
+  - docs/_gh_include
+  - docs/conf.py
+  - docs/roles.rst.template
+  - docs/requirements.yml
