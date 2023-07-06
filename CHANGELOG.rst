@@ -1,7 +1,9 @@
-===============================================
-kubernetes.kubevirt Release Notes
-===============================================
+=============================================
+KubeVirt Collection for Ansible Release Notes
+=============================================
 
 .. contents:: Topics
 
-This changelog describes changes after version 0.0.0
+
+v0.1.0
+======
