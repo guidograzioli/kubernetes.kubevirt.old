@@ -2,7 +2,7 @@
 
 namespace: kubernetes
 name: kubevirt
-version: 0.1.0
+version: "0.1.0"
 readme: README.md
 authors:
   - Felix Matouschek (github.com/0xFelix)
