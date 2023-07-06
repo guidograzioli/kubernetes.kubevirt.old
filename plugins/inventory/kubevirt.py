@@ -10,7 +10,7 @@ DOCUMENTATION = """
 name: kubevirt
 
 short_description: KubeVirt inventory source
-    
+
 author:
 - "Felix Matouschek (@0xFelix)"
 
@@ -163,12 +163,20 @@ from typing import (
     List,
     Tuple,
 )
+import traceback
 
-from kubernetes.dynamic.resource import ResourceField
-from kubernetes.dynamic.exceptions import (
-    DynamicApiError,
-    ResourceNotFoundError,
-)
+try:
+    from kubernetes.dynamic.resource import ResourceField
+    from kubernetes.dynamic.exceptions import (
+        DynamicApiError,
+        ResourceNotFoundError,
+    )
+except ImportError:
+    HAS_K8S = False
+    K8S_IMPORT_ERROR = traceback.format_exc()
+else:
+    HAS_K8S = True
+    K8S_IMPORT_ERROR = None
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 

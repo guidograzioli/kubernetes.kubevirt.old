@@ -46,8 +46,9 @@ options:
     type: str
   namespace:
     description:
-    - Specify the name of the VirtualMachine.
+    - Specify the namespace of the VirtualMachine.
     type: str
+    required: yes
   annotations:
     description:
     - Specify annotations to set on the VirtualMachine.
@@ -113,16 +114,19 @@ options:
     - Specify the interfaces of the VirtualMachine.
     - 'See: https://kubevirt.io/api-reference/main/definitions.html#_v1_interface'
     type: list
+    elements: 'dict'
   networks:
     description:
     - Specify the networks of the VirtualMachine.
     - 'See: https://kubevirt.io/api-reference/main/definitions.html#_v1_network'
     type: list
+    elements: 'dict'
   volumes:
     description:
     - Specify the volumes of the VirtualMachine.
     - 'See: https://kubevirt.io/api-reference/main/definitions.html#_v1_volume'
     type: list
+    elements: 'dict'
   wait:
     description:
     - Whether to wait for the VirtualMachine to end up in the ready state.
@@ -194,6 +198,7 @@ result:
   description:
   - The created object. Will be empty in the case of a deletion.
   type: complex
+  returned: success
   contains:
     changed:
       description: Whether the VirtualMachine was changed
@@ -212,9 +217,7 @@ result:
 
 from copy import deepcopy
 from typing import Dict
-import yaml
-
-from jinja2 import Environment
+import traceback
 
 from ansible_collections.kubernetes.core.plugins.module_utils.ansiblemodule import (
     AnsibleModule,
@@ -233,6 +236,25 @@ from ansible_collections.kubernetes.core.plugins.module_utils.k8s.core import (
 from ansible_collections.kubernetes.core.plugins.module_utils.k8s.exceptions import (
     CoreException,
 )
+
+try:
+    import yaml
+except ImportError:
+    HAS_YAML = False
+    YAML_IMPORT_ERROR = traceback.format_exc()
+else:
+    HAS_YAML = True
+    YAML_IMPORT_ERROR = None
+
+try:
+    from jinja2 import Environment
+except ImportError:
+    HAS_JINJA = False
+    JINJA_IMPORT_ERROR = traceback.format_exc()
+else:
+    HAS_JINJA = True
+    JINJA_IMPORT_ERROR = None
+
 
 VM_TEMPLATE = """
 apiVersion: {{ api_version }}
@@ -351,9 +373,9 @@ def arg_spec() -> Dict:
                 "preference": {"type": "bool", "default": False},
             },
         },
-        "interfaces": {"type": "list", "element": "dict"},
-        "networks": {"type": "list", "element": "dict"},
-        "volumes": {"type": "list", "element": "dict"},
+        "interfaces": {"type": "list", "elements": "dict"},
+        "networks": {"type": "list", "elements": "dict"},
+        "volumes": {"type": "list", "elements": "dict"},
         "wait": {"type": "bool", "default": False},
         "wait_sleep": {"type": "int", "default": 5},
         "wait_timeout": {"type": "int", "default": 120},
