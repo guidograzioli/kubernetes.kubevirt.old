@@ -1,7 +1,4 @@
 name: CI
-concurrency:
-  group: ${{ github.head_ref }}
-  cancel-in-progress: true
 on:
   push:
     branches:
@@ -9,9 +6,7 @@ on:
   pull_request:
   schedule:
     - cron: '0 6 * * *'
-
 jobs:
-
   sanity:
     uses: ansible-network/github_actions/.github/workflows/sanity.yml@main
     with:
@@ -78,10 +73,9 @@ jobs:
               "python-version": "3.8"
             }
           ]
-
   integration:
     runs-on: ubuntu-latest
-    name: I (Ⓐ${{ matrix.ansible }}+py${{ matrix.python }})
+    name: I (${{ matrix.ansible }}+py${{ matrix.python }})
     strategy:
       fail-fast: false
       matrix:
