@@ -47,7 +47,7 @@ jobs:
       - name: Create default collection path
         run: |
           mkdir -p /home/runner/.ansible/
-          ln -s /home/runner/work/amq_streams/amq_streams /home/runner/.ansible/collections
+          ln -s /home/runner/work/kubevirt/kubevirt/ /home/runner/.ansible/collections
 
       - name: Create changelog and documentation
         uses: ansible-middleware/collection-docs-action@main
