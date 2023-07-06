@@ -1,6 +1,6 @@
-.. Red Hat middleware_automation amq Ansible Collection documentation main file
+.. Red Hat kubernetes kubevirt Ansible Collection documentation main file
 
-Welcome to AMQ Collection documentation
+Welcome to Kubevirt Collection documentation
 =======================================
 
 .. toctree::
@@ -24,17 +24,3 @@ Welcome to AMQ Collection documentation
    :caption: General
 
    Changelog <CHANGELOG>
-   License <LICENSE>
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Middleware collections
-
-   Infinispan / Red Hat Data Grid <https://ansible-middleware.github.io/infinispan/>
-   Keycloak / Red Hat Single Sign-On <https://ansible-middleware.github.io/keycloak/>
-   Wildfly / Red Hat JBoss EAP <https://ansible-middleware.github.io/wildfly/>
-   Tomcat / Red Hat JWS <https://ansible-middleware.github.io/jws/>
-   ActiveMQ / Red Hat AMQ <https://ansible-middleware.github.io/amq/>
-   Kafka / Red Hat AMQ Streams <https://ansible-middleware.github.io/amq_streams/>
-   Red Hat CSP Download <https://ansible-middleware.github.io/redhat-csp-download/>
-   JCliff <https://ansible-middleware.github.io/ansible_collections_jcliff/>
