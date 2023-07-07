@@ -67,7 +67,12 @@ Every voice is important. If you have something on your mind, create an issue or
 
 <!-- List any external resources the collection depends on, for example minimum versions of an OS, libraries, or utilities. Do not list other Ansible collections here. -->
 - python >= 3.6
-- kubernetes (git+https://github.com/0xFelix/python.git@07d6623b64ffb5e76f6ac9f967c91c65416af0a1)
+
+Python libraries:
+- kubernetes
+- PyYaml
+- jsonpatch
+- jinja2
 
 ### Supported connections
 <!-- Optional. If your collection supports only specific connection types (such as HTTPAPI, netconf, or others), list them here. -->
