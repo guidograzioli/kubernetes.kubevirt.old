@@ -324,7 +324,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         try:
             obj = v1_dns.get(name="cluster")
         except DynamicApiError as exc:
-            self.display.debug(f"Failed to fetch cluster DNS config: {self.format_dynamic_api_exc(exc)}")
+            self.display.debug(
+                f"Failed to fetch cluster DNS config: {self.format_dynamic_api_exc(exc)}"
+            )
             return None
         return obj.get("spec", None).get("baseDomain", None)
 
