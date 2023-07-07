@@ -101,6 +101,11 @@ options:
         - In case multiple networks are attached to a VirtualMachineInstance, define which interface should
           be returned as primary IP address.
         aliases: [ interface_name ]
+      kube_secondary_dns:
+        description:
+        - Enable kubesecondarydns derived host names when using a secondary network interface.
+        type: bool
+        default: False
       api_version:
         description:
         - Specify the used KubeVirt API version.
@@ -176,6 +181,8 @@ class GetVmiOptions:
     api_version: str
     label_selector: str
     network_name: str
+    kube_secondary_dns: bool
+    base_domain: str
     host_format: str
 
     def __post_init__(self):
@@ -295,6 +302,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     connection.get("api_version"),
                     connection.get("label_selector"),
                     connection.get("network_name", connection.get("interface_name")),
+                    connection.get("kube_secondary_dns", False),
+                    self.get_cluster_domain(client),
                     self.host_format,
                 )
                 for namespace in namespaces:
@@ -303,9 +312,21 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             client = get_api_client()
             name = self.get_default_host_name(client.configuration.host)
             namespaces = self.get_available_namespaces(client)
-            opts = GetVmiOptions(None, None, None, self.host_format)
+            opts = GetVmiOptions(None, None, None, False, None, self.host_format)
             for namespace in namespaces:
                 self.get_vmis_for_namespace(client, name, namespace, opts)
+
+    def get_cluster_domain(self, client):
+        """
+        get_cluster_domain tries to get the base domain of the cluster.
+        """
+        v1_dns = client.resources.get(api_version="config.openshift.io/v1", kind="DNS")
+        try:
+            obj = v1_dns.get(name="cluster")
+        except DynamicApiError as exc:
+            self.display.debug(f"Failed to fetch cluster DNS config: {self.format_dynamic_api_exc(exc)}")
+            return None
+        return obj.get("spec", None).get("baseDomain", None)
 
     def get_available_namespaces(self, client):
         """
@@ -402,7 +423,16 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             # Set up the connection
             self.inventory.set_variable(vmi_name, "ansible_connection", "ssh")
-            self.inventory.set_variable(vmi_name, "ansible_host", interface.ipAddress)
+
+            # Set ansible_host to the kubesecondarydns derived host name if enabled
+            # See https://github.com/kubevirt/kubesecondarydns#parameters
+            if opts.kube_secondary_dns and opts.network_name is not None:
+                ansible_host = f"{opts.network_name}.{vmi.metadata.name}.{vmi.metadata.namespace}.vm"
+                if opts.base_domain is not None:
+                    ansible_host += f".{opts.base_domain}"
+            else:
+                ansible_host = interface.ipAddress
+            self.inventory.set_variable(vmi_name, "ansible_host", ansible_host)
 
             # Add hostvars from metadata
             self.inventory.set_variable(vmi_name, "object_type", "vmi")
