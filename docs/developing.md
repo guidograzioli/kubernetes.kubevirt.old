@@ -1,4 +1,3 @@
-
 ## Contributor's Guidelines
 
 - All YAML files named with `.yml` extension

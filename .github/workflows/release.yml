@@ -6,7 +6,7 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-    if: github.repository == 'guidograzioli/kubevirt'
+    if: github.repository == '0xFelix/kubernetes.kubevirt'
     permissions:
       actions: write
       checks: write
@@ -59,7 +59,7 @@ jobs:
         uses: ansible-middleware/collection-docs-action@main
         with:
           collection_fqcn: kubernetes.kubevirt
-          collection_repo: guidograzioli/kubevirt
+          collection_repo: 0xFelix/kubernetes.kubevirt
           dependencies: false
           commit_changelog: true
           commit_ghpages: false

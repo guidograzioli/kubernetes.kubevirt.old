@@ -145,7 +145,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'Kubevirtcollection', 'Red Hat Kubevirt Ansible Collection Documentation',
+    (master_doc, 'KubevirtCollection', 'Red Hat Kubevirt Ansible Collection Documentation',
      [author], 1)
 ]
 
