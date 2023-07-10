@@ -216,6 +216,7 @@ class GetVmiOptions:
         if self.host_format is None:
             self.host_format = "{namespace}-{name}"
 
+
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     """
     This class implements the actual inventory module.
@@ -382,7 +383,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         get_cluster_domain tries to get the base domain of an OpenShift cluster.
         """
         try:
-            v1_dns = client.resources.get(api_version="config.openshift.io/v1", kind="DNS")
+            v1_dns = client.resources.get(
+                api_version="config.openshift.io/v1", kind="DNS"
+            )
         except ResourceNotFoundError:
             # If resource not found return None
             return None
