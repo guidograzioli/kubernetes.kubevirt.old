@@ -199,6 +199,10 @@ class GetVmiOptions:
     def __post_init__(self):
         if self.api_version is None:
             self.api_version = "kubevirt.io/v1"
+        if self.kube_secondary_dns is None:
+            self.kube_secondary_dns = False
+        if self.use_service is None:
+            self.use_service = True
         if self.host_format is None:
             self.host_format = "{namespace}-{name}"
 
@@ -250,10 +254,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         # LoadBalancer services can return a hostname or an IP address
         if service["spec"]["type"] == TYPE_LOADBALANCER:
-            ingress = service["status"]["loadBalancer"].get("ingress", None)
+            ingress = service["status"]["loadBalancer"].get("ingress")
             if ingress is not None and len(ingress) > 0:
-                hostname = ingress[0].get("hostname", None)
-                ip_address = ingress[0].get("ip", None)
+                hostname = ingress[0].get("hostname")
+                ip_address = ingress[0].get("ip")
                 return hostname if hostname is not None else ip_address
 
         # NodePort services use the node name as host
@@ -351,8 +355,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     connection.get("api_version"),
                     connection.get("label_selector"),
                     connection.get("network_name", connection.get("interface_name")),
-                    connection.get("kube_secondary_dns", False),
-                    connection.get("use_service", True),
+                    connection.get("kube_secondary_dns"),
+                    connection.get("use_service"),
                     connection.get("base_domain", self.get_cluster_domain(client)),
                     self.host_format,
                 )
@@ -378,7 +382,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 f"Failed to fetch cluster DNS config: {self.format_dynamic_api_exc(exc)}"
             )
             return None
-        return obj.get("spec", None).get("baseDomain", None)
+        return obj.get("spec", {}).get("baseDomain")
 
     def get_available_namespaces(self, client):
         """
@@ -481,7 +485,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 vmi,
                 vmi_name,
                 interface.ipAddress,
-                services.get(vmi.metadata.labels.get(LABEL_KUBEVIRT_IO_DOMAIN, None)),
+                services.get(vmi.metadata.labels.get(LABEL_KUBEVIRT_IO_DOMAIN)),
                 opts,
             )
 
@@ -585,7 +589,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         services = {}
         for service in service_list.items:
             # Continue if service is not of type LoadBalancer or NodePort
-            if service.get("spec", None).get("type", None) not in (
+            if service.get("spec", {}).get("type") not in (
                 TYPE_LOADBALANCER,
                 TYPE_NODEPORT,
             ):
@@ -593,19 +597,19 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             # Continue if ports are not defined, there are more than one port mapping
             # or the target port is not port 22/ssh
-            ports = service["spec"].get("ports", None)
+            ports = service["spec"].get("ports")
             if (
                 ports is None
                 or len(ports) != 1
-                or ports[0].get("targetPort", None) != 22
+                or ports[0].get("targetPort") != 22
             ):
                 continue
 
             # Only add the service to the dict if the domain selector is present
             domain = (
                 service["spec"]
-                .get("selector", None)
-                .get(LABEL_KUBEVIRT_IO_DOMAIN, None)
+                .get("selector", {})
+                .get(LABEL_KUBEVIRT_IO_DOMAIN)
             )
             if domain is not None:
                 services[domain] = service
