@@ -106,6 +106,11 @@ options:
         - Enable kubesecondarydns derived host names when using a secondary network interface.
         type: bool
         default: False
+      use_service:
+        description:
+        - Enable the use of services to establish an SSH connection to the VirtualMachine.
+        type: bool
+        default: True
       api_version:
         description:
         - Specify the used KubeVirt API version.
@@ -152,6 +157,7 @@ connections:
 
 from dataclasses import dataclass
 from json import loads
+from typing import Dict
 
 from kubernetes.dynamic.resource import ResourceField
 from kubernetes.dynamic.exceptions import DynamicApiError
@@ -166,6 +172,10 @@ from ansible_collections.kubernetes.core.plugins.module_utils.common import (
 from ansible_collections.kubernetes.core.plugins.module_utils.k8s.client import (
     get_api_client,
 )
+
+LABEL_KUBEVIRT_IO_DOMAIN = "kubevirt.io/domain"
+TYPE_LOADBALANCER = "LoadBalancer"
+TYPE_NODEPORT = "NodePort"
 
 
 class KubeVirtInventoryException(Exception):
@@ -182,6 +192,7 @@ class GetVmiOptions:
     label_selector: str
     network_name: str
     kube_secondary_dns: bool
+    use_service: bool
     base_domain: str
     host_format: str
 
@@ -229,6 +240,44 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             return exc.body
 
         return f"{exc.status} Reason: {exc.reason}"
+
+    @staticmethod
+    def get_host_from_service(service, node_name: str) -> str | None:
+        """
+        get_host_from_service extracts the hostname to be used from the
+        passed in service.
+        """
+
+        # LoadBalancer services can return a hostname or an IP address
+        if service["spec"]["type"] == TYPE_LOADBALANCER:
+            ingress = service["status"]["loadBalancer"].get("ingress", None)
+            if ingress is not None and len(ingress) > 0:
+                hostname = ingress[0].get("hostname", None)
+                ip_address = ingress[0].get("ip", None)
+                return hostname if hostname is not None else ip_address
+
+        # NodePort services use the node name as host
+        if service["spec"]["type"] == TYPE_NODEPORT:
+            return node_name
+
+        return None
+
+    @staticmethod
+    def get_port_from_service(service) -> str | None:
+        """
+        get_port_from_service extracts the port to be used from the
+        passed in service.
+        """
+
+        # LoadBalancer services use the port attribute
+        if service["spec"]["type"] == TYPE_LOADBALANCER:
+            return service["spec"]["ports"][0]["port"]
+
+        # LoadBalancer services use the nodePort attribute
+        if service["spec"]["type"] == TYPE_NODEPORT:
+            return service["spec"]["ports"][0]["nodePort"]
+
+        return None
 
     def __init__(self):
         super().__init__()
@@ -303,6 +352,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     connection.get("label_selector"),
                     connection.get("network_name", connection.get("interface_name")),
                     connection.get("kube_secondary_dns", False),
+                    connection.get("use_service", True),
                     self.get_cluster_domain(client),
                     self.host_format,
                 )
@@ -312,13 +362,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             client = get_api_client()
             name = self.get_default_host_name(client.configuration.host)
             namespaces = self.get_available_namespaces(client)
-            opts = GetVmiOptions(None, None, None, False, None, self.host_format)
+            opts = GetVmiOptions(None, None, None, False, True, None, self.host_format)
             for namespace in namespaces:
                 self.get_vmis_for_namespace(client, name, namespace, opts)
 
     def get_cluster_domain(self, client):
         """
-        get_cluster_domain tries to get the base domain of the cluster.
+        get_cluster_domain tries to get the base domain of the OpenShift cluster.
         """
         v1_dns = client.resources.get(api_version="config.openshift.io/v1", kind="DNS")
         try:
@@ -362,6 +412,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             raise KubeVirtInventoryException(
                 f"Error fetching VirtualMachineInstance list: {self.format_dynamic_api_exc(exc)}"
             ) from exc
+
+        services = self.get_ssh_services_for_namespace(client, namespace)
 
         namespace_group = f"namespace_{namespace}"
         namespace_vmis_group = f"{namespace_group}_vmis"
@@ -425,16 +477,13 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
             # Set up the connection
             self.inventory.set_variable(vmi_name, "ansible_connection", "ssh")
-
-            # Set ansible_host to the kubesecondarydns derived host name if enabled
-            # See https://github.com/kubevirt/kubesecondarydns#parameters
-            if opts.kube_secondary_dns and opts.network_name is not None:
-                ansible_host = f"{opts.network_name}.{vmi.metadata.name}.{vmi.metadata.namespace}.vm"
-                if opts.base_domain is not None:
-                    ansible_host += f".{opts.base_domain}"
-            else:
-                ansible_host = interface.ipAddress
-            self.inventory.set_variable(vmi_name, "ansible_host", ansible_host)
+            self.set_ansible_host_and_port(
+                vmi,
+                vmi_name,
+                interface.ipAddress,
+                services.get(vmi.metadata.labels.get(LABEL_KUBEVIRT_IO_DOMAIN, None)),
+                opts,
+            )
 
             # Add hostvars from metadata
             self.inventory.set_variable(vmi_name, "object_type", "vmi")
@@ -515,6 +564,83 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self.inventory.set_variable(
                 vmi_name, "vmi_volume_status", vmi_volume_status
             )
+
+    def get_ssh_services_for_namespace(self, client, namespace: str) -> Dict:
+        """
+        get_ssh_services_for_namespace retrieves all services of a namespace exposing port 22/ssh.
+        The services are mapped to the name of the corresponding domain.
+        """
+
+        v1_service = client.resources.get(api_version="v1", kind="Service")
+        try:
+            service_list = v1_service.get(
+                namespace=namespace,
+            )
+        except DynamicApiError as exc:
+            self.display.debug(exc)
+            raise KubeVirtInventoryException(
+                f"Error fetching Service list: {self.format_dynamic_api_exc(exc)}"
+            ) from exc
+
+        services = {}
+        for service in service_list.items:
+            # Continue if service is not of type LoadBalancer or NodePort
+            if service.get("spec", None).get("type", None) not in (
+                TYPE_LOADBALANCER,
+                TYPE_NODEPORT,
+            ):
+                continue
+
+            # Continue if ports are not defined, there are more than one port mapping
+            # or the target port is not port 22/ssh
+            ports = service["spec"].get("ports", None)
+            if (
+                ports is None
+                or len(ports) != 1
+                or ports[0].get("targetPort", None) != 22
+            ):
+                continue
+
+            # Only add the service to the dict if the domain selector is present
+            domain = (
+                service["spec"]
+                .get("selector", None)
+                .get(LABEL_KUBEVIRT_IO_DOMAIN, None)
+            )
+            if domain is not None:
+                services[domain] = service
+
+        return services
+
+    def set_ansible_host_and_port(self, vmi, vmi_name, ip_address, service, opts):
+        """
+        set_ansible_host_and_port sets the ansible_host and possibly the ansible_port var.
+        Secondary interfaces have priority over a service exposing SSH
+        """
+
+        ansible_host = None
+        if opts.kube_secondary_dns and opts.network_name is not None:
+            # Set ansible_host to the kubesecondarydns derived host name if enabled
+            # See https://github.com/kubevirt/kubesecondarydns#parameters
+            ansible_host = (
+                f"{opts.network_name}.{vmi.metadata.name}.{vmi.metadata.namespace}.vm"
+            )
+            if opts.base_domain is not None:
+                ansible_host += f".{opts.base_domain}"
+        elif opts.use_service and service is not None:
+            # Set ansible_host and ansible_port to the host and port from the LoadBalancer
+            # or NodePort service exposing SSH
+            host = self.get_host_from_service(service, vmi.status.nodeName)
+            port = self.get_port_from_service(service)
+            if host is not None and port is not None:
+                ansible_host = host
+                self.inventory.set_variable(vmi_name, "ansible_port", port)
+
+        # Default to the IP address of the interface if ansible_host was not set prior
+        if ansible_host is None:
+            ansible_host = ip_address
+
+        self.inventory.set_variable(vmi_name, "ansible_host", ansible_host)
 
     def __resource_field_to_dict(self, field):
         """
