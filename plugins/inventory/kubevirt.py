@@ -157,10 +157,18 @@ connections:
 
 from dataclasses import dataclass
 from json import loads
-from typing import Dict
+from typing import (
+    Any,
+    Dict,
+    List,
+    Tuple,
+)
 
 from kubernetes.dynamic.resource import ResourceField
-from kubernetes.dynamic.exceptions import DynamicApiError
+from kubernetes.dynamic.exceptions import (
+    DynamicApiError,
+    ResourceNotFoundError,
+)
 
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable, Cacheable
 
@@ -171,6 +179,7 @@ from ansible_collections.kubernetes.core.plugins.module_utils.common import (
 
 from ansible_collections.kubernetes.core.plugins.module_utils.k8s.client import (
     get_api_client,
+    K8SClient,
 )
 
 LABEL_KUBEVIRT_IO_DOMAIN = "kubevirt.io/domain"
@@ -188,15 +197,16 @@ class GetVmiOptions:
     This class holds the options defined by the user.
     """
 
-    api_version: str
-    label_selector: str
-    network_name: str
-    kube_secondary_dns: bool
-    use_service: bool
-    base_domain: str
-    host_format: str
+    api_version: str | None = None
+    label_selector: str | None = None
+    network_name: str | None = None
+    kube_secondary_dns: bool | None = None
+    use_service: bool | None = None
+    base_domain: str | None = None
+    host_format: str | None = None
 
     def __post_init__(self):
+        # Set defaults in __post_init__ to allow instatiating class with None values
         if self.api_version is None:
             self.api_version = "kubevirt.io/v1"
         if self.kube_secondary_dns is None:
@@ -205,7 +215,6 @@ class GetVmiOptions:
             self.use_service = True
         if self.host_format is None:
             self.host_format = "{namespace}-{name}"
-
 
 class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     """
@@ -218,7 +227,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     transport = "kubectl"
 
     @staticmethod
-    def get_default_host_name(host):
+    def get_default_host_name(host: str) -> str:
         """
         get_default_host_name strips URL schemes from the host name and
         replaces invalid characters.
@@ -231,10 +240,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         )
 
     @staticmethod
-    def format_dynamic_api_exc(exc):
+    def format_dynamic_api_exc(exc: DynamicApiError) -> str:
         """
         format_dynamic_api_exc tries to extract the message from the JSON body
-        of a DynamicException.
+        of a DynamicApiError.
         """
         if exc.body:
             if exc.headers and exc.headers.get("Content-Type") == "application/json":
@@ -246,12 +255,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         return f"{exc.status} Reason: {exc.reason}"
 
     @staticmethod
-    def get_host_from_service(service, node_name: str) -> str | None:
+    def get_host_from_service(service: Dict, node_name: str) -> str | None:
         """
         get_host_from_service extracts the hostname to be used from the
         passed in service.
         """
-
         # LoadBalancer services can return a hostname or an IP address
         if service["spec"]["type"] == TYPE_LOADBALANCER:
             ingress = service["status"]["loadBalancer"].get("ingress")
@@ -267,12 +275,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         return None
 
     @staticmethod
-    def get_port_from_service(service) -> str | None:
+    def get_port_from_service(service: Dict) -> str | None:
         """
         get_port_from_service extracts the port to be used from the
         passed in service.
         """
-
         # LoadBalancer services use the port attribute
         if service["spec"]["type"] == TYPE_LOADBALANCER:
             return service["spec"]["ports"][0]["port"]
@@ -283,11 +290,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return None
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.host_format = None
 
-    def verify_file(self, path):
+    def verify_file(self, path: str) -> None:
         """
         verify_file ensures the inventory file is compatible with this plugin.
         """
@@ -295,7 +302,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             ("kubevirt.yml", "kubevirt.yaml")
         )
 
-    def parse(self, inventory, loader, path, cache=True):
+    def parse(self, inventory: Any, loader: Any, path: str, cache: bool = True) -> None:
         """
         parse runs basic setup of the inventory.
         """
@@ -305,7 +312,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.host_format = config_data.get("host_format")
         self.setup(config_data, cache, cache_key)
 
-    def setup(self, config_data, cache, cache_key):
+    def setup(self, config_data: Dict, cache: bool, cache_key: str) -> None:
         """
         setup checks for availability of the Kubernetes Python client,
         gets the configured connections and runs fetch_objects on them.
@@ -329,7 +336,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if not source_data:
             self.fetch_objects(connections)
 
-    def fetch_objects(self, connections):
+    def fetch_objects(self, connections: Dict) -> None:
         """
         fetch_objects populates the inventory with every configured connection.
         """
@@ -370,11 +377,15 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             for namespace in namespaces:
                 self.get_vmis_for_namespace(client, name, namespace, opts)
 
-    def get_cluster_domain(self, client):
+    def get_cluster_domain(self, client: K8SClient) -> str | None:
         """
-        get_cluster_domain tries to get the base domain of the OpenShift cluster.
+        get_cluster_domain tries to get the base domain of an OpenShift cluster.
         """
-        v1_dns = client.resources.get(api_version="config.openshift.io/v1", kind="DNS")
+        try:
+            v1_dns = client.resources.get(api_version="config.openshift.io/v1", kind="DNS")
+        except ResourceNotFoundError:
+            # If resource not found return None
+            return None
         try:
             obj = v1_dns.get(name="cluster")
         except DynamicApiError as exc:
@@ -384,7 +395,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             return None
         return obj.get("spec", {}).get("baseDomain")
 
-    def get_available_namespaces(self, client):
+    def get_available_namespaces(self, client: K8SClient) -> List:
         """
         get_available_namespaces lists all namespaces accessible with the
         configured credentials and returns them.
@@ -399,7 +410,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             ) from exc
         return [namespace.metadata.name for namespace in obj.items]
 
-    def get_vmis_for_namespace(self, client, name, namespace, opts):
+    def get_vmis_for_namespace(
+        self, client: K8SClient, name: str, namespace: str, opts: GetVmiOptions
+    ) -> None:
         """
         get_vmis_for_namespace lists all VirtualMachineInstances in a namespace
         and adds groups and hosts to the inventory.
@@ -569,12 +582,11 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 vmi_name, "vmi_volume_status", vmi_volume_status
             )
 
-    def get_ssh_services_for_namespace(self, client, namespace: str) -> Dict:
+    def get_ssh_services_for_namespace(self, client: K8SClient, namespace: str) -> Dict:
         """
         get_ssh_services_for_namespace retrieves all services of a namespace exposing port 22/ssh.
         The services are mapped to the name of the corresponding domain.
         """
-
         v1_service = client.resources.get(api_version="v1", kind="Service")
         try:
             service_list = v1_service.get(
@@ -598,30 +610,28 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             # Continue if ports are not defined, there are more than one port mapping
             # or the target port is not port 22/ssh
             ports = service["spec"].get("ports")
-            if (
-                ports is None
-                or len(ports) != 1
-                or ports[0].get("targetPort") != 22
-            ):
+            if ports is None or len(ports) != 1 or ports[0].get("targetPort") != 22:
                 continue
 
             # Only add the service to the dict if the domain selector is present
-            domain = (
-                service["spec"]
-                .get("selector", {})
-                .get(LABEL_KUBEVIRT_IO_DOMAIN)
-            )
+            domain = service["spec"].get("selector", {}).get(LABEL_KUBEVIRT_IO_DOMAIN)
             if domain is not None:
                 services[domain] = service
 
         return services
 
-    def set_ansible_host_and_port(self, vmi, vmi_name, ip_address, service, opts):
+    def set_ansible_host_and_port(
+        self,
+        vmi: Dict,
+        vmi_name: str,
+        ip_address: str,
+        service: Dict | None,
+        opts: GetVmiOptions,
+    ) -> None:
         """
         set_ansible_host_and_port sets the ansible_host and possibly the ansible_port var.
         Secondary interfaces have priority over a service exposing SSH
         """
-
         ansible_host = None
         if opts.kube_secondary_dns and opts.network_name is not None:
             # Set ansible_host to the kubesecondarydns derived host name if enabled
@@ -646,7 +656,9 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         self.inventory.set_variable(vmi_name, "ansible_host", ansible_host)
 
-    def __resource_field_to_dict(self, field):
+    def __resource_field_to_dict(
+        self, field: Dict | List | ResourceField | Tuple
+    ) -> Dict:
         """
         Replace this with ResourceField.to_dict() once available in a stable release of
         the Kubernetes Python client

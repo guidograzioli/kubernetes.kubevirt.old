@@ -210,8 +210,8 @@ result:
       type: str
 """
 
-from typing import Dict
 from copy import deepcopy
+from typing import Dict
 import yaml
 
 from jinja2 import Environment
@@ -369,7 +369,7 @@ def arg_spec() -> Dict:
     return spec
 
 
-def main():
+def main() -> None:
     """
     main instantiates the AnsibleK8SModule, creates the resource
     definition and runs the module.
