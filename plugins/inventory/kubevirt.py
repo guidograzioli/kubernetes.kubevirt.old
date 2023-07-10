@@ -353,7 +353,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     connection.get("network_name", connection.get("interface_name")),
                     connection.get("kube_secondary_dns", False),
                     connection.get("use_service", True),
-                    self.get_cluster_domain(client),
+                    connection.get("base_domain", self.get_cluster_domain(client)),
                     self.host_format,
                 )
                 for namespace in namespaces:
@@ -362,7 +362,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             client = get_api_client()
             name = self.get_default_host_name(client.configuration.host)
             namespaces = self.get_available_namespaces(client)
-            opts = GetVmiOptions(None, None, None, False, True, None, self.host_format)
+            opts = GetVmiOptions(host_format=self.host_format)
             for namespace in namespaces:
                 self.get_vmis_for_namespace(client, name, namespace, opts)
 
