@@ -394,7 +394,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             v1_dns = client.resources.get(
                 api_version="config.openshift.io/v1", kind="DNS"
             )
-        except:
+        except Exception:
             # If resource not found return None
             return None
         try:
