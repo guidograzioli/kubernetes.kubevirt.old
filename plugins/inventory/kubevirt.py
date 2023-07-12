@@ -168,10 +168,7 @@ import traceback
 
 try:
     from kubernetes.dynamic.resource import ResourceField
-    from kubernetes.dynamic.exceptions import (
-        DynamicApiError,
-        ResourceNotFoundError,
-    )
+    from kubernetes.dynamic.exceptions import DynamicApiError
 except ImportError:
     HAS_K8S = False
     K8S_IMPORT_ERROR = traceback.format_exc()
@@ -395,7 +392,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             v1_dns = client.resources.get(
                 api_version="config.openshift.io/v1", kind="DNS"
             )
-        except ResourceNotFoundError:
+        except:
             # If resource not found return None
             return None
         try:
