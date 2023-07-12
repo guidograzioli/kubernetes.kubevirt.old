@@ -166,9 +166,9 @@ from typing import (
     Tuple,
     Union,
 )
-import traceback
 
 try:
+    from kubernetes.client.exceptions import ApiException
     from kubernetes.dynamic.resource import ResourceField
     from kubernetes.dynamic.exceptions import DynamicApiError
 except ImportError:
@@ -399,7 +399,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             return None
         try:
             obj = v1_dns.get(name="cluster")
-        except DynamicApiError as exc:
+        except ApiException as exc:
             self.display.debug(
                 f"Failed to fetch cluster DNS config: {self.format_dynamic_api_exc(exc)}"
             )
@@ -414,7 +414,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         v1_namespace = client.resources.get(api_version="v1", kind="Namespace")
         try:
             obj = v1_namespace.get()
-        except DynamicApiError as exc:
+        except ApiException as exc:
             self.display.debug(exc)
             raise KubeVirtInventoryException(
                 f"Error fetching Namespace list: {self.format_dynamic_api_exc(exc)}"
@@ -435,7 +435,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             vmi_list = vmi_client.get(
                 namespace=namespace, label_selector=opts.label_selector
             )
-        except DynamicApiError as exc:
+        except ApiException as exc:
             self.display.debug(exc)
             raise KubeVirtInventoryException(
                 f"Error fetching VirtualMachineInstance list: {self.format_dynamic_api_exc(exc)}"
@@ -603,7 +603,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             service_list = v1_service.get(
                 namespace=namespace,
             )
-        except DynamicApiError as exc:
+        except ApiException as exc:
             self.display.debug(exc)
             raise KubeVirtInventoryException(
                 f"Error fetching Service list: {self.format_dynamic_api_exc(exc)}"
