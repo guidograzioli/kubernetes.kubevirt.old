@@ -162,7 +162,9 @@ from typing import (
     Any,
     Dict,
     List,
+    Optional,
     Tuple,
+    Union,
 )
 import traceback
 
@@ -203,13 +205,13 @@ class GetVmiOptions:
     This class holds the options defined by the user.
     """
 
-    api_version: str | None = None
-    label_selector: str | None = None
-    network_name: str | None = None
-    kube_secondary_dns: bool | None = None
-    use_service: bool | None = None
-    base_domain: str | None = None
-    host_format: str | None = None
+    api_version: Optional[str] = None
+    label_selector: Optional[str] = None
+    network_name: Optional[str] = None
+    kube_secondary_dns: Optional[bool] = None
+    use_service: Optional[bool] = None
+    base_domain: Optional[str] = None
+    host_format: Optional[str] = None
 
     def __post_init__(self):
         # Set defaults in __post_init__ to allow instatiating class with None values
@@ -262,7 +264,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         return f"{exc.status} Reason: {exc.reason}"
 
     @staticmethod
-    def get_host_from_service(service: Dict, node_name: str) -> str | None:
+    def get_host_from_service(service: Dict, node_name: str) -> Optional[str]:
         """
         get_host_from_service extracts the hostname to be used from the
         passed in service.
@@ -282,7 +284,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         return None
 
     @staticmethod
-    def get_port_from_service(service: Dict) -> str | None:
+    def get_port_from_service(service: Dict) -> Optional[str]:
         """
         get_port_from_service extracts the port to be used from the
         passed in service.
@@ -384,7 +386,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             for namespace in namespaces:
                 self.get_vmis_for_namespace(client, name, namespace, opts)
 
-    def get_cluster_domain(self, client: K8SClient) -> str | None:
+    def get_cluster_domain(self, client: K8SClient) -> Optional[str]:
         """
         get_cluster_domain tries to get the base domain of an OpenShift cluster.
         """
@@ -634,7 +636,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         vmi: Dict,
         vmi_name: str,
         ip_address: str,
-        service: Dict | None,
+        service: Optional[Dict],
         opts: GetVmiOptions,
     ) -> None:
         """
@@ -666,7 +668,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         self.inventory.set_variable(vmi_name, "ansible_host", ansible_host)
 
     def __resource_field_to_dict(
-        self, field: Dict | List | ResourceField | Tuple
+        self, field: Union[Dict, List, ResourceField, Tuple]
     ) -> Dict:
         """
         Replace this with ResourceField.to_dict() once available in a stable release of
