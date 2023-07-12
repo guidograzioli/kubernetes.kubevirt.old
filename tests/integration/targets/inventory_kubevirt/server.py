@@ -94,7 +94,44 @@ if __name__ == "__main__":
             ],
         },
     )
-    server.set_json_response(path="/api/v1", code=200, body={"resources": {}})
+    server.set_json_response(
+        path="/api/v1",
+        code=200,
+        body={
+            "kind": "APIResourceList",
+            "groupVersion": "v1",
+            "resources": [
+                {
+                    "name": "services",
+                    "singularName": "service",
+                    "namespaced": True,
+                    "kind": "Service",
+                    "verbs": [
+                      "create",
+                      "delete",
+                      "deletecollection",
+                      "get",
+                      "list",
+                      "patch",
+                      "update",
+                      "watch"
+                    ],
+                    "shortNames": [
+                      "svc"
+                    ],
+                }
+            ]
+        }
+    )
+    server.set_json_response(
+        path="/api/v1/namespaces/default/services",
+        code=200,
+        body={
+            "kind": "ServiceList",
+            "groupVersion": "v1",
+            "items": [],
+        }
+    )
     server.set_json_response(
         path="/apis",
         code=200,
