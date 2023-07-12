@@ -3,7 +3,7 @@
 set -eux
 
 source virtualenv.sh
-pip install kubernetes
+pip install kubernetes PyYAML jsonpatch Jinja2
 
 ./server.py &
 
