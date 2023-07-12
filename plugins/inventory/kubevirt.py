@@ -174,6 +174,7 @@ try:
 except ImportError:
     class ResourceField:
         pass
+
     class DynamicApiError:
         pass
 
