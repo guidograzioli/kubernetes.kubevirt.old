@@ -5,20 +5,11 @@ __metaclass__ = type
 
 import json
 import os
-
-try:
-    from http.server import HTTPServer
-    from http.server import SimpleHTTPRequestHandler
-except ImportError:
-    from BaseHTTPServer import HTTPServer
-    from SimpleHTTPServer import SimpleHTTPRequestHandler
-
+from http import HTTPStatus
+from http.server import HTTPServer
+from http.server import SimpleHTTPRequestHandler
 from threading import Thread
-
-try:
-    from urllib.parse import urlparse
-except ImportError:
-    from urlparse import urlparse
+from urllib.parse import urlparse
 
 
 class TestHandler(SimpleHTTPRequestHandler):
@@ -29,7 +20,6 @@ class TestHandler(SimpleHTTPRequestHandler):
         """
         Empty method, so we don't mix output of HTTP server with tests
         """
-        pass
 
     def do_GET(self):
         params = urlparse(self.path)
@@ -45,10 +35,10 @@ class TestHandler(SimpleHTTPRequestHandler):
         if params.path in self.handlers:
             self.handlers[params.path](self)
         else:
-            SimpleHTTPRequestHandler.do_POST(self)
+            self.send_error(HTTPStatus.NOT_FOUND)
 
 
-class TestServer(object):
+class TestServer:
     # The host and port and path used by the embedded tests web server:
     PORT = None
 
@@ -107,21 +97,19 @@ if __name__ == "__main__":
                     "namespaced": True,
                     "kind": "Service",
                     "verbs": [
-                      "create",
-                      "delete",
-                      "deletecollection",
-                      "get",
-                      "list",
-                      "patch",
-                      "update",
-                      "watch"
+                        "create",
+                        "delete",
+                        "deletecollection",
+                        "get",
+                        "list",
+                        "patch",
+                        "update",
+                        "watch",
                     ],
-                    "shortNames": [
-                      "svc"
-                    ],
+                    "shortNames": ["svc"],
                 }
-            ]
-        }
+            ],
+        },
     )
     server.set_json_response(
         path="/api/v1/namespaces/default/services",
@@ -130,7 +118,7 @@ if __name__ == "__main__":
             "kind": "ServiceList",
             "groupVersion": "v1",
             "items": [],
-        }
+        },
     )
     server.set_json_response(
         path="/apis",
@@ -294,8 +282,7 @@ if __name__ == "__main__":
                                 "queueCount": 1,
                             }
                         ],
-                        "launcherContainerImageVersion":
-                            "registry:5000/kubevirt/virt-launcher@sha256:5c1474d240488c9a8e6e6e48b2ad446113744353b4cd2464baee3550e6b1829d",
+                        "launcherContainerImageVersion": "registry:5000/kubevirt/virt-launcher@sha256:5c1474d240488c9a8e6e6e48b2ad446113744353b4cd2464baee3550e6b1829d",
                         "migrationMethod": "BlockMigration",
                         "migrationTransport": "Unix",
                         "nodeName": "node01",
