@@ -69,7 +69,7 @@ spec:
         service: loadbalancer
     spec:
       domain:
-          devices: {}
+        devices: {}
       terminationGracePeriodSeconds: 180'''
 
 FIXTURE2 = {
