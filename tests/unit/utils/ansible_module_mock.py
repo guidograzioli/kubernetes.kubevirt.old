@@ -45,6 +45,7 @@ def fail_json(*args, **kwargs):
     kwargs["failed"] = True
     raise AnsibleFailJson(kwargs)
 
+
 def get_api_client(*args, **kwargs):
     """function to patch over get_api_client """
     pass
