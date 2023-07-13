@@ -22,8 +22,8 @@ from ansible_collections.kubernetes.kubevirt.tests.unit.utils.ansible_module_moc
 )
 
 FIXTURE1 = {
-    "apiVersion": "kubevirt.io/v1", 
-    "kind": "VirtualMachine", 
+    "apiVersion": "kubevirt.io/v1",
+    "kind": "VirtualMachine",
     "metadata": {
         "name": "testvm",
         "namespace": "default",
