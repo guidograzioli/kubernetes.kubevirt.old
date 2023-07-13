@@ -19,6 +19,7 @@ from ansible_collections.kubernetes.kubevirt.tests.unit.utils.ansible_module_moc
     exit_json,
     fail_json,
     set_module_args,
+    get_api_client
 )
 
 FIXTURE1 = {
@@ -101,9 +102,16 @@ class TestCreateVMI(unittest.TestCase):
         )
         self.mock_module_helper.start()
 
+        self.mock_runner = patch.multiple(
+            runner,
+            get_api_client=get_api_client
+        )
+        self.mock_runner.start()
+
         # Stop the patch after test execution
         # like tearDown but executed also when the setup failed
         self.addCleanup(self.mock_module_helper.stop)
+        self.addCleanup(self.mock_runner.stop)
 
     def test_module_fail_when_required_args_missing(self):
         with self.assertRaises(AnsibleFailJson):
@@ -135,5 +143,5 @@ class TestCreateVMI(unittest.TestCase):
             mock_run_command.assert_called_once_with(
                 ANY,
                 FIXTURE1,
-                ANY,
+                FIXTURE2,
             )
