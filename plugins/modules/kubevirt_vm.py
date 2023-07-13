@@ -219,7 +219,6 @@ result:
 
 from copy import deepcopy
 from typing import Dict
-import traceback
 
 from ansible_collections.kubernetes.core.plugins.module_utils.ansiblemodule import (
     AnsibleModule,
@@ -238,6 +237,8 @@ from ansible_collections.kubernetes.core.plugins.module_utils.k8s.core import (
 from ansible_collections.kubernetes.core.plugins.module_utils.k8s.exceptions import (
     CoreException,
 )
+
+import traceback
 
 try:
     import yaml
