@@ -44,16 +44,3 @@ def fail_json(*args, **kwargs):
     """function to patch over fail_json; package return data into an exception"""
     kwargs["failed"] = True
     raise AnsibleFailJson(kwargs)
-
-
-def get_bin_path(self, arg, required=False):
-    """Mock AnsibleModule.get_bin_path"""
-    if arg.endswith("helm"):
-        return "/usr/bin/helm"
-    else:
-        if required:
-            fail_json(msg="%r not found !" % arg)
-
-
-# def warn(self,msg):
-#     return msg

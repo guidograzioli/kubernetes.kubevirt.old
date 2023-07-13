@@ -7,28 +7,78 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import unittest
+import json
 
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch, call, ANY
 
 from ansible.module_utils import basic
-from ansible_collections.kubernetes.kubevirt.plugins.modules import kubevirt_vm
-from ansible_collections.kubernetes.core.tests.unit.utils.ansible_module_mock import (
+from ansible_collections.kubernetes.core.plugins.module_utils.k8s import runner
+from ansible_collections.kubernetes.core.plugins.module_utils.k8s.core import AnsibleK8SModule
+from ansible_collections.guidograzioli.kubevirt.plugins.modules import kubevirt_vm
+from ansible_collections.guidograzioli.kubevirt.tests.unit.utils.ansible_module_mock import (
     AnsibleFailJson,
     AnsibleExitJson,
     exit_json,
     fail_json,
-    get_bin_path,
     set_module_args,
 )
 
+FIXTURE1={
+    "apiVersion": "kubevirt.io/v1", 
+    "kind": "VirtualMachine", 
+    "metadata": {
+        "name": "testvm",
+        "namespace": "default",
+        "labels": {
+            "environment": "staging",
+            "service": "loadbalancer"
+        }
+    }, 
+    "spec": {
+        "running": True,
+        "template": {
+            "metadata": {
+                "labels": {
+                    "environment": "staging",
+                    "service": "loadbalancer"
+                }
+            },
+            "spec": {
+                "domain": {
+                    "devices": {}
+                }, 
+                "terminationGracePeriodSeconds": 180
+            }
+        }
+    }
+}
+
+FIXTURE2={
+    'name': 'testvm',
+    'namespace': 'default',
+    'state': 'present',
+    'labels': {
+        'service': 'loadbalancer',
+        'environment': 'staging'
+    },
+    'api_version': 'kubevirt.io/v1', 'running': True, 'termination_grace_period': 180, 'wait': False, 'wait_sleep': 5, 'wait_timeout': 120, 'force': False,
+    'generate_name': None, 'annotations': None, 'instancetype': None, 'preference': None, 'infer_from_volume': None, 'clear_revision_name': None,
+    'interfaces': None, 'networks': None, 'volumes': None, 'kubeconfig': None, 'context': None, 'host': None, 'api_key': None, 'username': None,
+    'password': None, 'validate_certs': None, 'ca_cert': None, 'client_cert': None, 'client_key': None, 'proxy': None, 'no_proxy': None, 'proxy_headers': None,
+    'persist_config': None, 'impersonate_user': None, 'impersonate_groups': None, 'delete_options': None,
+    'resource_definition': 'apiVersion: kubevirt.io/v1\nkind: VirtualMachine\nmetadata:\n  name: "testvm"\n  namespace: "default"\n  labels:\n    environment: staging\n    service: loadbalancer\nspec:\n  running: True\n  template:\n    metadata:\n      labels:\n        environment: staging\n        service: loadbalancer\n    spec:\n      domain:\n        devices: {}\n      terminationGracePeriodSeconds: 180',
+    'wait_condition': {
+        'type': 'Ready',
+        'status': True
+    }
+}
 
 class TestCreateVMI(unittest.TestCase):
     def setUp(self):
         self.mock_module_helper = patch.multiple(
             basic.AnsibleModule,
             exit_json=exit_json,
-            fail_json=fail_json,
-            get_bin_path=get_bin_path,
+            fail_json=fail_json
         )
         self.mock_module_helper.start()
 
@@ -53,20 +103,18 @@ class TestCreateVMI(unittest.TestCase):
                 }
             }
         )
-        with patch.object(basic.AnsibleModule, "run_command") as mock_run_command:
+        with patch.object(runner, "perform_action") as mock_run_command:
             mock_run_command.return_value = (
-                0,
-                "configuration updated",
-                "",
+                {
+                    "method": "create",
+                    "changed": True,
+                    "result": "success"
+                }
             )  # successful execution
             with self.assertRaises(AnsibleExitJson) as result:
-                kubevirt_vm.main()
-        #kubevirt_vm.assert_called_once_with()
-        #mock_run_command.assert_called_once_with(
-        #    "/usr/bin/helm upgrade -i --reset-values test /tmp/path",
-        #    environ_update={"HELM_NAMESPACE": "test"},
-        #)
-        assert (
-            result.exception.args[0]["command"]
-            == "/usr/bin/helm upgrade -i --reset-values test /tmp/path"
-        )
+               kubevirt_vm.main()
+            mock_run_command.assert_called_once_with(
+                ANY,
+                FIXTURE1,
+                ANY,
+            )
