@@ -51,6 +51,26 @@ FIXTURE1 = {
     }
 }
 
+METADATA = '''apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: "testvm"
+  namespace: "default"
+  labels:
+    environment: staging
+    service: loadbalancer
+spec:
+  running: True
+  template:
+    metadata:
+      labels:
+        environment: staging
+        service: loadbalancer
+    spec:
+      domain:
+          devices: {}
+      terminationGracePeriodSeconds: 180'''
+
 FIXTURE2 = {
     'name': 'testvm',
     'namespace': 'default',
@@ -64,7 +84,7 @@ FIXTURE2 = {
     'interfaces': None, 'networks': None, 'volumes': None, 'kubeconfig': None, 'context': None, 'host': None, 'api_key': None, 'username': None,
     'password': None, 'validate_certs': None, 'ca_cert': None, 'client_cert': None, 'client_key': None, 'proxy': None, 'no_proxy': None, 'proxy_headers': None,
     'persist_config': None, 'impersonate_user': None, 'impersonate_groups': None, 'delete_options': None,
-    'resource_definition': 'apiVersion: kubevirt.io/v1\nkind: VirtualMachine\nmetadata:\n  name: "testvm"\n  namespace: "default"\n  labels:\n    environment: staging\n    service: loadbalancer\nspec:\n  running: True\n  template:\n    metadata:\n      labels:\n        environment: staging\n        service: loadbalancer\n    spec:\n      domain:\n        devices: {}\n      terminationGracePeriodSeconds: 180',
+    'resource_definition': METADATA,
     'wait_condition': {
         'type': 'Ready',
         'status': True
