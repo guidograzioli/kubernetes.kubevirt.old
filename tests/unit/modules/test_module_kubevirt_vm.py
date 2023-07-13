@@ -93,7 +93,7 @@ FIXTURE2 = {
 }
 
 
-class TestCreateVMI(unittest.TestCase):
+class TestCreateVM(unittest.TestCase):
     def setUp(self):
         self.mock_module_helper = patch.multiple(
             basic.AnsibleModule,
