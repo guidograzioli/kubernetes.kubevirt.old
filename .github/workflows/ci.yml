@@ -7,6 +7,18 @@ on:
   schedule:
     - cron: '0 6 * * *'
 jobs:
+  prereq:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          path: ansible_collections/kubernetes/kubevirt
+          fetch-depth: 0
+      - run: |
+          mkdir -p /home/runner/.kube/
+          cp -rp ${GITHUB_WORKSPACE}/ansible_collections/kubernetes/kubevirt/tests/.kubeconfig /home/runner/.kube/config
+          cat /home/runner/.kube/config
   sanity:
     uses: ansible-network/github_actions/.github/workflows/sanity.yml@main
     with:
@@ -78,79 +90,69 @@ jobs:
             }
           ]
   unit-source:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Check out code
-      uses: actions/checkout@v2
-      with:
-        path: ansible_collections/kubernetes/kubevirt
-        fetch-depth: 0
-    - run: |
-        mkdir -p /home/runner/.kube/
-        cp -rp ${GITHUB_WORKSPACE}/ansible_collections/kubernetes/kubevirt/tests/.kubeconfig /home/runner/.kube/config
-        cat /home/runner/.kube/config
-    - name: Run tests
-      uses: ansible-network/github_actions/.github/workflows/unit_source.yml@main
-      with:
-        matrix_exclude: >-
-            [
-              {
-                "python-version": "3.11"
-              },
-              {
-                "ansible-version": "stable-2.12",
-                "python-version": "3.7"
-              },
-              {
-                "ansible-version": "stable-2.13",
-                "python-version": "3.7"
-              },
-              {
-                "ansible-version": "stable-2.12",
-                "python-version": "3.8"
-              },
-              {
-                "ansible-version": "stable-2.13",
-                "python-version": "3.8"
-              },
-              {
-                "ansible-version": "stable-2.14",
-                "python-version": "3.7"
-              },
-              {
-                "ansible-version": "stable-2.14",
-                "python-version": "3.8"
-              },
-              {
-                "ansible-version": "stable-2.15",
-                "python-version": "3.7"
-              },
-              {
-                "ansible-version": "stable-2.15",
-                "python-version": "3.8"
-              },
-              {
-                "ansible-version": "milestone",
-                "python-version": "3.7"
-              },
-              {
-                "ansible-version": "milestone",
-                "python-version": "3.8"
-              },
-              {
-                "ansible-version": "devel",
-                "python-version": "3.7"
-              },
-              {
-                "ansible-version": "devel",
-                "python-version": "3.8"
-              },
-              {
-                "ansible-version": "devel",
-                "python-version": "3.9"
-              }
-            ]
-        collection_pre_install: ''
+    uses: ansible-network/github_actions/.github/workflows/unit_source.yml@main
+    needs:
+      - prereq
+    with:
+      matrix_exclude: >-
+          [
+            {
+              "python-version": "3.11"
+            },
+            {
+              "ansible-version": "stable-2.12",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.13",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.12",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "stable-2.13",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "stable-2.14",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.14",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "stable-2.15",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.15",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "milestone",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "milestone",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "devel",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "devel",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "devel",
+              "python-version": "3.9"
+            }
+          ]
+      collection_pre_install: ''
   splitter:
     env:
       source_dir: "./source"
