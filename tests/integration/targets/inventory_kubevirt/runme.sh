@@ -3,7 +3,7 @@
 set -eux
 
 export ANSIBLE_ROLES_PATH="../"
-USER_CREDENTIALS_DIR=$(pwd)
+export USER_CREDENTIALS_DIR=$(pwd)
 
 {
 export ANSIBLE_CALLBACKS_ENABLED=profile_tasks
