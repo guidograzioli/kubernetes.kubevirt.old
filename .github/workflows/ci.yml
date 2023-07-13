@@ -313,8 +313,7 @@ jobs:
           OPT_INSTALL_KIND: false
           OPT_INSTALL_KUBECTL: false
           OPT_CREATE_CLUSTER: false
-        with:
-          path: ${{ steps.install-collection.outputs.collection_path }}/hack
+        working-directory: ${{ steps.install-collection.outputs.collection_path }}/hack
 
       - name: Run integration tests
         uses: ansible-network/github_actions/.github/actions/ansible_test_integration@main
