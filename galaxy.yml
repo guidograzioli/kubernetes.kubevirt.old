@@ -38,4 +38,3 @@ build_ignore:
   - docs/conf.py
   - docs/roles.rst.template
   - docs/requirements.yml
-  - tests
