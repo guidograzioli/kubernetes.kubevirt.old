@@ -7,13 +7,11 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import unittest
-import json
 
-from unittest.mock import MagicMock, patch, call, ANY
+from unittest.mock import patch, ANY
 
 from ansible.module_utils import basic
 from ansible_collections.kubernetes.core.plugins.module_utils.k8s import runner
-from ansible_collections.kubernetes.core.plugins.module_utils.k8s.core import AnsibleK8SModule
 from ansible_collections.kubernetes.kubevirt.plugins.modules import kubevirt_vm
 from ansible_collections.kubernetes.kubevirt.tests.unit.utils.ansible_module_mock import (
     AnsibleFailJson,
@@ -23,7 +21,7 @@ from ansible_collections.kubernetes.kubevirt.tests.unit.utils.ansible_module_moc
     set_module_args,
 )
 
-FIXTURE1={
+FIXTURE1 = {
     "apiVersion": "kubevirt.io/v1", 
     "kind": "VirtualMachine", 
     "metadata": {
@@ -33,7 +31,7 @@ FIXTURE1={
             "environment": "staging",
             "service": "loadbalancer"
         }
-    }, 
+    },
     "spec": {
         "running": True,
         "template": {
@@ -46,14 +44,14 @@ FIXTURE1={
             "spec": {
                 "domain": {
                     "devices": {}
-                }, 
+                },
                 "terminationGracePeriodSeconds": 180
             }
         }
     }
 }
 
-FIXTURE2={
+FIXTURE2 = {
     'name': 'testvm',
     'namespace': 'default',
     'state': 'present',
@@ -72,6 +70,7 @@ FIXTURE2={
         'status': True
     }
 }
+
 
 class TestCreateVMI(unittest.TestCase):
     def setUp(self):
@@ -112,7 +111,7 @@ class TestCreateVMI(unittest.TestCase):
                 }
             )  # successful execution
             with self.assertRaises(AnsibleExitJson) as result:
-               kubevirt_vm.main()
+                kubevirt_vm.main()
             mock_run_command.assert_called_once_with(
                 ANY,
                 FIXTURE1,
