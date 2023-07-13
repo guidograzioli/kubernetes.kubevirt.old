@@ -90,6 +90,8 @@ jobs:
           ]
   unit-source:
     uses: ansible-network/github_actions/.github/workflows/unit_source.yml@main
+    needs:
+      - prereq
     with:
       matrix_exclude: >-
           [
