@@ -175,8 +175,13 @@ jobs:
 
       - name: display targets
         id: display
-        run: echo "test_targets=${{ steps.splitter.outputs.test_targets }}" >> $GITHUB_OUTPUT
+        run: echo "test_targets=kubernetes.kubevirt-1:kubevirt_vm;kubernetes.kubevirt-2:inventory_kubevirt" >> $GITHUB_OUTPUT
         shell: bash
+
+      # - name: display targets
+      #   id: display
+      #   run: echo "test_targets=${{ steps.splitter.outputs.test_targets }}" >> $GITHUB_OUTPUT
+      #   shell: bash
 
   integration:
     needs:
