@@ -309,13 +309,15 @@ jobs:
 
       - name: create kubernetes cluster
         uses: helm/kind-action@v1.4.0
+        with:
+          cluster_name: kv-testing
         if: steps.read-targets.outputs.ansible_test_targets != ''
 
       - name: create kubernetes cluster
         if: steps.read-targets.outputs.ansible_test_targets != ''
         run: >-
           /home/runner/work/kubernetes.kubevirt/kubernetes.kubevirt/source/hack/e2e-setup.sh \
-            --namespace kind-chart-testing \
+            --namespace kv-testing \
             --configure-inotify-limits \
             --configure-secondary-network \
             --deploy-kubevirt \
