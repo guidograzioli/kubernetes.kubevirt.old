@@ -201,9 +201,9 @@ jobs:
       fail-fast: false
       matrix:
         ansible-version:
-          # - stable-2.12
+          - stable-2.12
           # - milestone
-          - devel
+          # - devel
         python-version:
           # - "3.8"
           - "3.9"
@@ -226,6 +226,8 @@ jobs:
             python-version: 3.8
           - ansible-version: devel
             python-version: 3.8
+          - ansible-version: devel
+            python-version: 3.9
         enable-turbo-mode:
           - true
           - false

@@ -10,4 +10,20 @@
   tasks:
     - ansible.builtin.include_role:
         name: kubevirt_vm
-        tasks_from: deploy
+        tasks_from: connect.yml
+
+- connection: local
+  gather_facts: false
+  hosts: localhost
+  tasks:
+    - name: Create a VirtualMachine
+      kubernetes.kubevirt.kubevirt_vm:
+        state: present
+        name: testvm
+        namespace: default
+        labels:
+          app: test
+      register: recreate
+    - assert:
+        that:
+          - not recreate.changed
