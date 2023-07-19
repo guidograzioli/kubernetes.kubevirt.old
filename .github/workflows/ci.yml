@@ -274,7 +274,6 @@ jobs:
         if: steps.read-targets.outputs.ansible_test_targets != ''
 
       - name: install kubernetes.core collection
-        id: install-collection
         uses: ansible-network/github_actions/.github/actions/build_install_collection@main
         with:
           install_python_dependencies: true
@@ -321,7 +320,7 @@ jobs:
           OPT_INSTALL_KIND: false
           OPT_INSTALL_KUBECTL: false
           OPT_CREATE_CLUSTER: false
-        working-directory: ${{ steps.install-collection.outputs.collection_path }}/hack
+        working-directory: ${{ env.source }}/hack
 
       - name: Run integration tests
         uses: ansible-network/github_actions/.github/actions/ansible_test_integration@main
