@@ -1,0 +1,13 @@
+---
+- connection: local
+  gather_facts: false
+  hosts: localhost
+  roles:
+  - kubevirt_vm
+
+- gather_facts: true
+  hosts: testvm
+  tasks:
+    - ansible.builtin.include_role:
+        name: kubevirt_vm
+        tasks_from: deploy

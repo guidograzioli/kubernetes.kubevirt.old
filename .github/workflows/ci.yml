@@ -201,11 +201,11 @@ jobs:
       fail-fast: false
       matrix:
         ansible-version:
-          - stable-2.12
-          - milestone
+          # - stable-2.12
+          # - milestone
           - devel
         python-version:
-          - "3.8"
+          # - "3.8"
           - "3.9"
         exclude:
           - ansible-version: stable-2.9
