@@ -1,18 +1,22 @@
 ---
-- connection: local
+- name: Create VM
+  connection: local
   gather_facts: false
   hosts: localhost
   roles:
   - kubevirt_vm
 
-- gather_facts: true
+- name: Connect to VM
+  gather_facts: true
   hosts: testvm
+  remote_user: fedora
   tasks:
     - ansible.builtin.include_role:
         name: kubevirt_vm
         tasks_from: connect.yml
 
-- connection: local
+- name: Verify creation with exusting VM
+  connection: local
   gather_facts: false
   hosts: localhost
   tasks:
@@ -27,3 +31,29 @@
     - assert:
         that:
           - not recreate.changed
+
+- name: Delete VM
+  connection: local
+  gather_facts: false
+  hosts: localhost
+  tasks:
+    - ansible.builtin.include_role:
+        name: kubevirt_vm
+        tasks_from: delete.yml
+
+- name: Verify VM deletion
+  connection: local
+  gather_facts: false
+  hosts: localhost
+  tasks:
+    - name: Create a VirtualMachine
+      kubernetes.kubevirt.kubevirt_vm:
+        state: absent
+        name: testvm
+        namespace: default
+        labels:
+          app: test
+      register: delete
+    - assert:
+        that:
+          - not delete.changed
