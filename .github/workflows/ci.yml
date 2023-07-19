@@ -314,7 +314,7 @@ jobs:
       - name: create kubernetes cluster
         if: steps.read-targets.outputs.ansible_test_targets != ''
         run: >-
-          /home/runner/work/kubernetes.kubevirt/kubernetes.kubevirt/source/hack/e2e-setup.sh
+          /home/runner/work/kubernetes.kubevirt/kubernetes.kubevirt/source/hack/e2e-setup.sh --namespace kind-chart-testing --configure-inotify-limits--configure-secondary-network --deploy-kubevirt --deploy-kubevirt-cdi --deploy-kubevirt-common-instancetypes --deploy-cnao --create-nad
         shell: bash
         env:
           OPT_CLEANUP: false
