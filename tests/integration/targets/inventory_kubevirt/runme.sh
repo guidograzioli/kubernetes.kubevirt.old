@@ -2,58 +2,25 @@
 
 set -eux
 
-source virtualenv.sh
-pip install kubernetes PyYAML jsonpatch Jinja2
+export ANSIBLE_ROLES_PATH="../"
 
-./server.py &
+USER_CREDENTIALS_DIR=$(pwd)
+export USER_CREDENTIALS_DIR
 
-cleanup() {
-  kill -9 "$(jobs -p)"
-}
+{
+export ANSIBLE_CALLBACKS_ENABLED=profile_tasks
+export ANSIBLE_INVENTORY_ENABLED=kubernetes.kubevirt.kubevirt,yaml
+export ANSIBLE_PYTHON_INTERPRETER=auto_silent
 
-trap cleanup INT TERM EXIT
-
-# Fake auth file
-mkdir -p ~/.kube/
-cat <<EOF > ~/.kube/config
-apiVersion: v1
-clusters:
-- cluster:
-    insecure-skip-tls-verify: true
-    server: http://localhost:12345
-  name: development
-contexts:
-- context:
-    cluster: development
-    user: developer
-  name: dev-frontend
-current-context: dev-frontend
-kind: Config
-preferences: {}
-users:
-- name: developer
-  user:
-    token: ZDNg7LzSlp8a0u0fht_tRnPMTOjxqgJGCyi_iy0ecUw
-EOF
-
-#################################################
-#   RUN THE PLUGIN
-#################################################
-
-# run the plugin second
-export ANSIBLE_INVENTORY_ENABLED=kubernetes.kubevirt.kubevirt
-
-cat << EOF > "$OUTPUT_DIR/test.kubevirt.yml"
+cat << EOF > "test.kubevirt.yml"
 plugin: kubernetes.kubevirt.kubevirt
 connections:
   - namespaces:
     - default
 EOF
 
-ansible-inventory -vvvv -i "$OUTPUT_DIR/test.kubevirt.yml" --list --output="$OUTPUT_DIR/plugin.out"
+ansible-inventory -i test.kubevirt.yml -vvv --list "$@"
 
-#################################################
-#   DIFF THE RESULTS
-#################################################
-
-diff "$(pwd)/test.out" "$OUTPUT_DIR/plugin.out"
+} || {
+    exit 1
+}
