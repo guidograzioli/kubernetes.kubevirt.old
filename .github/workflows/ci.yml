@@ -312,14 +312,13 @@ jobs:
       - name: create kubernetes cluster
         if: steps.read-targets.outputs.ansible_test_targets != ''
         run: >-
-          e2e-setup.sh
+          /home/runner/work/kubernetes.kubevirt/kubernetes.kubevirt/source/hack/e2e-setup.sh
         shell: bash
         env:
           OPT_CLEANUP: false
           OPT_INSTALL_KIND: false
           OPT_INSTALL_KUBECTL: false
           OPT_CREATE_CLUSTER: false
-        working-directory: ${{ env.source }}/hack
 
       - name: Run integration tests
         uses: ansible-network/github_actions/.github/actions/ansible_test_integration@main
