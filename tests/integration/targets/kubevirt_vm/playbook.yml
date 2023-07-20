@@ -16,11 +16,11 @@
         wait: yes
         wait_timeout: 600
         spec:
-          memory:
-            guest: 128Mi
           domain:
             cpu:
               sockets: 1
+            memory:
+              guest: 128Mi
             devices:
               interfaces:
                 - name: default

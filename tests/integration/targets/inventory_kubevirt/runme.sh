@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-
 set -eux
+set -o pipefail
 
 export ANSIBLE_ROLES_PATH="../"
 
