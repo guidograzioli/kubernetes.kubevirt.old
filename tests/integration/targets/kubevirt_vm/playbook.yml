@@ -16,6 +16,7 @@
         preference:
           name: fedora
         wait: yes
+        wait_timeout: 1200
         spec:
           domain:
             devices:
