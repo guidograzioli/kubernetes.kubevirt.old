@@ -19,6 +19,8 @@
           memory:
             guest: 128Mi
           domain:
+            cpu:
+              cores: 1
             devices:
               interfaces:
                 - name: default
