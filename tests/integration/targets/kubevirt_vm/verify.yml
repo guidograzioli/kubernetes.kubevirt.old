@@ -1,7 +1,7 @@
 ---
 - name: Connect to VM
   gather_facts: true
-  hosts: testvm
+  hosts: default-testvm
   remote_user: fedora
   tasks:
     - ansible.builtin.debug:

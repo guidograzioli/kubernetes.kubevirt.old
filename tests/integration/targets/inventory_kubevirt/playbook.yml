@@ -17,7 +17,7 @@
             cpu:
               sockets: 1
             memory:
-              guest: 128Mi
+              guest: 256Mi
             devices:
               interfaces:
                 - name: default
@@ -43,7 +43,7 @@
             cpu:
               sockets: 1
             memory:
-              guest: 128Mi
+              guest: 256Mi
             devices:
               interfaces:
                 - name: default
