@@ -1,4 +1,3 @@
----
 - name: Create VM
   connection: local
   gather_facts: false
@@ -21,22 +20,34 @@
               interfaces:
                 - name: default
                   masquerade: {}
-                - name: bridge-network
-                  bridge: {}
           networks:
             - name: default
               pod: {}
-            - name: bridge-network
-              multus:
-                networkName: kindexgw
           volumes:
             - containerDisk:
                 image: quay.io/containerdisks/fedora:latest
               name: containerdisk
-            - cloudInitNoCloud:
-                userData: |-
-                  #cloud-config
-                  # The default username is: fedora
-                  ssh_authorized_keys:
-                    - "{{ lookup('file', 'pub_key') }}"
-              name: cloudinit
+    - name: Create a 2nd VirtualMachine
+      kubernetes.kubevirt.kubevirt_vm:
+        state: present
+        name: testvm2
+        namespace: default
+        labels:
+          foo: bar
+        instancetype:
+          name: u1.medium
+        preference:
+          name: fedora
+        spec:
+          domain:
+            devices:
+              interfaces:
+                - name: default
+                  masquerade: {}
+          networks:
+            - name: default
+              pod: {}
+          volumes:
+            - containerDisk:
+                image: quay.io/containerdisks/fedora:latest
+              name: containerdisk

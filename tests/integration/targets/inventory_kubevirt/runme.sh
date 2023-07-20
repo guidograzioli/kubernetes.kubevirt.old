@@ -14,8 +14,12 @@ export ANSIBLE_PYTHON_INTERPRETER=auto_silent
 
 ansible-inventory -i test.kubevirt.yml -y -vvv --list "$@"
 
-ansible-playbook playbooks/create.yml
+ansible-playbook -vvv playbook.yml
 
+# should list 2 vmi
+ansible-inventory -i test.kubevirt.yml -y -vvv --list "$@"
+
+# should list 1 vm with label_app_test
 ansible-inventory -i test.label.kubevirt.yml -y -vvv --list "$@"
 
 } || {
