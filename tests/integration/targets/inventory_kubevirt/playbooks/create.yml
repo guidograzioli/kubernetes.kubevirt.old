@@ -7,13 +7,13 @@
       kubernetes.kubevirt.kubevirt_vm:
         state: present
         name: testvm
-        namespace: kv-testing
+        namespace: default
         labels:
           app: test
     - name: Create a 2nd VirtualMachine
       kubernetes.kubevirt.kubevirt_vm:
         state: present
         name: testvm2
-        namespace: kv-testing
+        namespace: default
         labels:
           foo: bar
