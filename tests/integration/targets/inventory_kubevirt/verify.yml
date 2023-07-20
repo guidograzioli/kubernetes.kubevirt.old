@@ -14,13 +14,12 @@
         name: inv_all
     - ansible.builtin.assert:
         that:
-          - inv_label['all']['children']['label_app_test']['hosts']  | length == 1
-          - inv_label['all']['children']['label_foo_bar']['hosts']  | length == 1
+          - inv_all['all']['children']['label_app_test']['hosts'] | length == 1
+          - inv_all['all']['children']['label_foo_bar']['hosts'] | length == 1
     - name: Read filtered inventory
       ansible.builtin.include_vars:
         file: label.yml
         name: inv_label
     - ansible.builtin.assert:
         that:
-          - inv_label['all']['children']['label_app_test']['hosts']  | length == 1
-
+          - inv_label['all']['children']['label_app_test']['hosts'] | length == 1
