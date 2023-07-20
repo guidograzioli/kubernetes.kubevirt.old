@@ -3,22 +3,6 @@
   connection: local
   gather_facts: false
   hosts: localhost
-  roles:
-  - kubevirt_vm
-
-- name: Connect to VM
-  gather_facts: true
-  hosts: testvm
-  remote_user: fedora
-  tasks:
-    - ansible.builtin.include_role:
-        name: kubevirt_vm
-        tasks_from: connect.yml
-
-- name: Verify creation with existing VM
-  connection: local
-  gather_facts: false
-  hosts: localhost
   tasks:
     - name: Create a VirtualMachine
       kubernetes.kubevirt.kubevirt_vm:
@@ -27,33 +11,32 @@
         namespace: default
         labels:
           app: test
-      register: recreate
-    - assert:
-        that:
-          - not recreate.changed
-
-- name: Delete VM
-  connection: local
-  gather_facts: false
-  hosts: localhost
-  tasks:
-    - ansible.builtin.include_role:
-        name: kubevirt_vm
-        tasks_from: delete.yml
-
-- name: Verify VM deletion
-  connection: local
-  gather_facts: false
-  hosts: localhost
-  tasks:
-    - name: Create a VirtualMachine
-      kubernetes.kubevirt.kubevirt_vm:
-        state: absent
-        name: testvm
-        namespace: default
-        labels:
-          app: test
-      register: delete
-    - assert:
-        that:
-          - not delete.changed
+        instancetype:
+          name: u1.medium
+        preference:
+          name: fedora
+        spec:
+          domain:
+            devices:
+              interfaces:
+              - name: default
+                masquerade: {}
+              - name: bridge-network
+                bridge: {}
+          networks:
+          - name: default
+            pod: {}
+          - name: bridge-network
+            multus:
+              networkName: kindexgw
+          volumes:
+          - containerDisk:
+              image: quay.io/containerdisks/fedora:latest
+            name: containerdisk
+          - cloudInitNoCloud:
+              userData: |-
+                #cloud-config
+                # The default username is: fedora
+                ssh_authorized_keys:
+                  - "{{ lookup('file', 'pub_key') }}"
+            name: cloudinit
