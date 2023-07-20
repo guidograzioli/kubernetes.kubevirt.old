@@ -11,13 +11,15 @@
         namespace: default
         labels:
           app: test
-        instancetype:
-          name: server.tiny
         preference:
           name: fedora
         wait: yes
         wait_timeout: 1200
         spec:
+          cpu:
+            guest: 1
+          memory:
+            guest: 128Mi
           domain:
             devices:
               interfaces:
