@@ -202,8 +202,8 @@ jobs:
       matrix:
         ansible-version:
           - stable-2.12
-          # - milestone
-          # - devel
+          - milestone
+          - devel
         python-version:
           # - "3.8"
           - "3.9"
@@ -228,11 +228,8 @@ jobs:
             python-version: 3.8
           - ansible-version: devel
             python-version: 3.9
-        enable-turbo-mode:
-          - true
-          - false
-        job-index: [1, 2, 3, 4, 5, 6, 7, 8]
-    name: "integration-py${{ matrix.python-version }}-${{ matrix.ansible-version }}-turbo-mode=${{ matrix.enable-turbo-mode }}-${{ matrix.job-index }}"
+        job-index: [1, 2]
+    name: "integration-py${{ matrix.python-version }}-${{ matrix.ansible-version }}-${{ matrix.job-index }}"
     steps:
       - name: Read ansible-test targets
         id: read-targets
@@ -340,8 +337,6 @@ jobs:
           python_version: ${{ matrix.python-version }}
           ansible_version: ${{ matrix.ansible-version }}
           ansible_test_targets: ${{ steps.read-targets.outputs.ansible_test_targets }}
-          ansible_test_environment: |
-            ENABLE_TURBO_MODE=${{ matrix.enable-turbo-mode }}
         if: steps.read-targets.outputs.ansible_test_targets != ''
   all_green:
     if: ${{ always() }}
