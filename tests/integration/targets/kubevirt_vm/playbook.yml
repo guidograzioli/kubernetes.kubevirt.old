@@ -12,7 +12,7 @@
         labels:
           app: test
         instancetype:
-          name: u1.medium
+          name: server.tiny
         preference:
           name: fedora
         wait: yes
