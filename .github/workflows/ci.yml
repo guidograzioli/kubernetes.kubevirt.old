@@ -317,7 +317,6 @@ jobs:
         if: steps.read-targets.outputs.ansible_test_targets != ''
         run: >-
           /home/runner/work/kubernetes.kubevirt/kubernetes.kubevirt/source/hack/e2e-setup.sh \
-            --namespace kv-testing \
             --configure-inotify-limits \
             --configure-secondary-network \
             --deploy-kubevirt \
@@ -327,6 +326,7 @@ jobs:
             --create-nad
         shell: bash
         env:
+          CLUSTER_NAME: kv-testing
           OPT_CLEANUP: false
           OPT_INSTALL_KIND: false
           OPT_INSTALL_KUBECTL: false
