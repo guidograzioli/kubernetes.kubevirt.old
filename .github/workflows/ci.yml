@@ -327,6 +327,7 @@ jobs:
         shell: bash
         env:
           CLUSTER_NAME: kv-testing
+          KUBECTL: kubectl
           OPT_CLEANUP: false
           OPT_INSTALL_KIND: false
           OPT_INSTALL_KUBECTL: false
