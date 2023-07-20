@@ -16,7 +16,7 @@ ansible-inventory -i test.kubevirt.yml -y -vvv --list "$@"
 
 ansible-playbook playbooks/create.yml
 
-ansible-inventory -i test.kubevirt.label.yml -y -vvv --list "$@"
+ansible-inventory -i test.label.kubevirt.yml -y -vvv --list "$@"
 
 } || {
     exit 1
