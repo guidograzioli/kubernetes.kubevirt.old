@@ -9,7 +9,7 @@
     instancetype:
       name: u1.medium
     preference:
-      name: fedora
+      name: rhel.8
     spec:
       domain:
         devices:

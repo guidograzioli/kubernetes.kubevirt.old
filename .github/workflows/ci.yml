@@ -310,7 +310,7 @@ jobs:
           cluster_name: kv-testing
         if: steps.read-targets.outputs.ansible_test_targets != ''
 
-      - name: create kubernetes cluster
+      - name: deploy kubevirt
         if: steps.read-targets.outputs.ansible_test_targets != ''
         run: >-
           /home/runner/work/kubernetes.kubevirt/kubernetes.kubevirt/source/hack/e2e-setup.sh \

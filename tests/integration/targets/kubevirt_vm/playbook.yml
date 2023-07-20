@@ -15,7 +15,7 @@
         name: kubevirt_vm
         tasks_from: connect.yml
 
-- name: Verify creation with exusting VM
+- name: Verify creation with existing VM
   connection: local
   gather_facts: false
   hosts: localhost

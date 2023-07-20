@@ -12,14 +12,11 @@ export ANSIBLE_CALLBACKS_ENABLED=profile_tasks
 export ANSIBLE_INVENTORY_ENABLED=kubernetes.kubevirt.kubevirt,yaml
 export ANSIBLE_PYTHON_INTERPRETER=auto_silent
 
-cat << EOF > "test.kubevirt.yml"
-plugin: kubernetes.kubevirt.kubevirt
-connections:
-  - namespaces:
-    - default
-EOF
+ansible-inventory -i test.kubevirt.yml -y -vvv --list "$@"
 
-ansible-inventory -i test.kubevirt.yml -vvv --list "$@"
+ansible-playbook playbooks/create.yml
+
+ansible-inventory -i test.kubevirt.label.yml -y -vvv --list "$@"
 
 } || {
     exit 1

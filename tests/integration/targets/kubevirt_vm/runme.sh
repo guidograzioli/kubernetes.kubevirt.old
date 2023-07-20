@@ -5,7 +5,7 @@ export ANSIBLE_ROLES_PATH=../
 export ANSIBLE_INVENTORY_ENABLED=kubernetes.kubevirt.kubevirt,yaml
 
 
-mkdir files
+[ -d files ] || mkdir files
 ssh-keygen -t ed25519 -C test@test -f files/priv_key
 ssh-keygen -y -f priv_key > files/pub_key
 
