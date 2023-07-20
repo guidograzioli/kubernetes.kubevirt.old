@@ -20,7 +20,7 @@
             guest: 128Mi
           domain:
             cpu:
-              cores: 1
+              sockets: 1
             devices:
               interfaces:
                 - name: default
