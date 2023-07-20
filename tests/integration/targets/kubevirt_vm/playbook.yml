@@ -11,8 +11,6 @@
         namespace: default
         labels:
           app: test
-        preference:
-          name: fedora
         wait: yes
         wait_timeout: 600
         spec:
