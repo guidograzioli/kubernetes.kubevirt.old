@@ -14,6 +14,7 @@
           name: u1.medium
         preference:
           name: fedora
+        wait: yes
         spec:
           domain:
             devices:
@@ -38,6 +39,7 @@
           name: u1.medium
         preference:
           name: fedora
+        wait: yes
         spec:
           domain:
             devices:

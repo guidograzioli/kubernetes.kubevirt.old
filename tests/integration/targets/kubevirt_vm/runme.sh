@@ -12,7 +12,7 @@ ansible-playbook playbook.yml -vvv --private-key=files/priv_key "$@"
 
 ansible-inventory -i test.kubevirt.yml -y -vvv --list "$@"
 
-ansible-playbook verify.yml -vvv --private-key=files/priv_key "$@"
+ansible-playbook verify.yml -i test.kubevirt.yml -vvv --private-key=files/priv_key "$@"
 
 } || {
     exit 1
