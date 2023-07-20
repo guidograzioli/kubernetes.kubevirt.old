@@ -14,10 +14,8 @@
         preference:
           name: fedora
         wait: yes
-        wait_timeout: 1200
+        wait_timeout: 600
         spec:
-          cpu:
-            guest: 1
           memory:
             guest: 128Mi
           domain:
