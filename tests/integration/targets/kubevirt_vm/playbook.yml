@@ -7,7 +7,7 @@
     - name: Create a VirtualMachine
       kubernetes.kubevirt.kubevirt_vm:
         state: present
-        name: testvm
+        name: testvm3
         namespace: default
         labels:
           app: test
@@ -18,7 +18,7 @@
             cpu:
               sockets: 1
             memory:
-              guest: 128Mi
+              guest: 256Mi
             devices:
               interfaces:
                 - name: default
