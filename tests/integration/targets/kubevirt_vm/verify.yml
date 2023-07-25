@@ -54,6 +54,7 @@
         state: absent
         name: testvm3
         namespace: default
+        wait: true
 
 - name: Verify VM deletion
   connection: local
@@ -65,8 +66,6 @@
         state: absent
         name: testvm3
         namespace: default
-        labels:
-          app: test
       register: delete
     - ansible.builtin.assert:
         that:
