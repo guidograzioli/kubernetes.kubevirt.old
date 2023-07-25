@@ -18,7 +18,7 @@
             cpu:
               sockets: 1
             memory:
-              guest: 512Mi
+              guest: 1024Mi
             devices:
               interfaces:
                 - name: default
@@ -33,7 +33,7 @@
                 networkName: kindexgw
           volumes:
             - containerDisk:
-                image: quay.io/kubevirt/cirros-container-disk-demo:20230725_574a4c3a2
+                image: quay.io/containerdisks/fedora:latest
               name: containerdisk
             - cloudInitNoCloud:
                 userData: |-
