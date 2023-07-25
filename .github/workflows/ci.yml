@@ -230,7 +230,7 @@ jobs:
           - ansible-version: devel
             python-version: 3.9
         job-index: [1, 2]
-    name: "integration-py${{ matrix.python-version }}-${{ matrix.ansible-version }}-${{ matrix.job-index }}"
+    name: "py${{ matrix.python-version }} / ${{ matrix.ansible-version }} / ${{ matrix.job-index }}"
     steps:
       - name: Read ansible-test targets
         id: read-targets
