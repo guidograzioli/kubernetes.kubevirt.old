@@ -40,5 +40,5 @@
                   #cloud-config
                   # The default username is: fedora
                   ssh_authorized_keys:
-                    - "{{ lookup('file', 'pub_key') }}"
+                    - {{ lookup('file', 'pub_key') }}
               name: cloudinit
