@@ -26,7 +26,7 @@
   tasks:
     - name: Print out variables
       ansible.builtin.debug:
-        var: ansible-facts
+        var: ansible_facts
 
 - name: Verify creation with existing VM
   connection: local

@@ -207,7 +207,7 @@ jobs:
         python-version:
           - "3.8"
           - "3.9"
-          - "3.10"
+          - "3.11"
         exclude:
           - ansible-version: stable-2.9
             python-version: 3.9
@@ -230,7 +230,7 @@ jobs:
           - ansible-version: devel
             python-version: 3.9
         job-index: [1, 2]
-    name: "py${{ matrix.python-version }} / ${{ matrix.ansible-version }} / ${{ matrix.job-index }}"
+    name: "integration / py${{ matrix.python-version }} / ${{ matrix.ansible-version }} / ${{ matrix.job-index }}"
     steps:
       - name: Read ansible-test targets
         id: read-targets
@@ -305,7 +305,7 @@ jobs:
           source_path: ${{ env.source }}
         if: steps.read-targets.outputs.ansible_test_targets != ''
 
-      - name: create kubernetes cluster
+      - name: install kind / kubectl
         uses: helm/kind-action@v1.8.0
         with:
           install_only: true
