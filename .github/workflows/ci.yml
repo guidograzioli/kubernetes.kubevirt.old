@@ -307,7 +307,9 @@ jobs:
       - name: create kubernetes cluster
         uses: helm/kind-action@v1.8.0
         with:
-          cluster_name: kv-testing
+          install_only: true
+          version: v0.20.0
+          kubectl_version: v1.27.3
         if: steps.read-targets.outputs.ansible_test_targets != ''
 
       - name: deploy kubevirt
@@ -320,6 +322,7 @@ jobs:
             --deploy-kubevirt-cdi \
             --deploy-kubevirt-common-instancetypes \
             --deploy-cnao \
+            --create-cluster \
             --create-nad
         shell: bash
         env:
