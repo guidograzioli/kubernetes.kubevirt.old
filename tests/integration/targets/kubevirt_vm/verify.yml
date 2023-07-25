@@ -1,10 +1,24 @@
 ---
+- name: Wait for ssh
+  connection: local
+  gather_facts: false
+  hosts: localhost
+  tasks:
+    - name: Wait 300 seconds for port 22 to become open and contain "OpenSSH"
+      ansible.builtin.wait_for:
+        port: 22
+        host: default-testvm3
+        search_regex: OpenSSH
+        delay: 10
+      connection: local
+
 - name: Connect to VM
   gather_facts: true
   hosts: default-testvm3
   remote_user: fedora
   tasks:
-    - ansible.builtin.debug:
+    - name: Print out variables
+      ansible.builtin.debug:
         var: ansible-facts
 
 - name: Verify creation with existing VM
@@ -15,7 +29,7 @@
     - name: Create a VirtualMachine
       kubernetes.kubevirt.kubevirt_vm:
         state: present
-        name: testvm
+        name: testvm3
         namespace: default
         labels:
           app: test
@@ -29,19 +43,21 @@
   gather_facts: false
   hosts: localhost
   tasks:
-    - ansible.builtin.include_role:
-        name: kubevirt_vm
-        tasks_from: delete.yml
+    - name: Delete a VirtualMachine
+      kubernetes.kubevirt.kubevirt_vm:
+        state: absent
+        name: testvm3
+        namespace: default
 
 - name: Verify VM deletion
   connection: local
   gather_facts: false
   hosts: localhost
   tasks:
-    - name: Create a VirtualMachine
+    - name: Delete a VirtualMachine
       kubernetes.kubevirt.kubevirt_vm:
         state: absent
-        name: testvm
+        name: testvm3
         namespace: default
         labels:
           app: test
