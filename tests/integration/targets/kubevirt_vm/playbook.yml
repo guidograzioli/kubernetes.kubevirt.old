@@ -33,7 +33,7 @@
                 networkName: kindexgw
           volumes:
             - containerDisk:
-                image: quay.io/containerdisks/cirros:latest
+                image: quay.io/repository/kubevirt/cirros-container-disk-demo:latest
               name: containerdisk
             - cloudInitNoCloud:
                 userData: |-
