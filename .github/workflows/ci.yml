@@ -327,11 +327,9 @@ jobs:
         shell: bash
         env:
           CLUSTER_NAME: kv-testing
+          KIND: kind
           KUBECTL: kubectl
           OPT_CLEANUP: false
-          OPT_INSTALL_KIND: false
-          OPT_INSTALL_KUBECTL: false
-          OPT_CREATE_CLUSTER: false
 
       - name: Run integration tests
         uses: ansible-network/github_actions/.github/actions/ansible_test_integration@main
