@@ -10,7 +10,8 @@
           ansible.builtin.wait_for:
             port: 22
             host: "{{ hostvars['default-testvm3'].ansible_host }}"
-            delay: 10
+            delay: 30
+            timeout: 600
       rescue:
         - name: Port 22 not open
           ansible.builtin.debug:
