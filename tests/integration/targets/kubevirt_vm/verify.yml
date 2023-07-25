@@ -20,6 +20,8 @@
   gather_facts: true
   hosts: default-testvm3
   remote_user: fedora
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
   tasks:
     - name: Print out variables
       ansible.builtin.debug:
