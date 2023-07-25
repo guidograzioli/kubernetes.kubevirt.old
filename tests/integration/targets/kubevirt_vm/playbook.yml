@@ -33,12 +33,11 @@
                 networkName: kindexgw
           volumes:
             - containerDisk:
-                image: quay.io/containerdisks/fedora:latest
+                image: quay.io/containerdisks/cirros:latest
               name: containerdisk
             - cloudInitNoCloud:
                 userData: |-
                   #cloud-config
-                  # The default username is: fedora
                   ssh_authorized_keys:
                     - {{ lookup('file', 'pub_key') }}
               name: cloudinit
