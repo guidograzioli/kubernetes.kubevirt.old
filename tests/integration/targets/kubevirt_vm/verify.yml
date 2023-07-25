@@ -11,7 +11,6 @@
             port: 22
             host: default-testvm3
             delay: 10
-          connection: local
       rescue:
         - name: Port 22 not open
           ansible.builtin.debug:
