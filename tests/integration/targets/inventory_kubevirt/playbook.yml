@@ -22,9 +22,14 @@
               interfaces:
                 - name: default
                   masquerade: {}
+                - name: bridge-network
+                  bridge: {}
           networks:
             - name: default
               pod: {}
+            - name: bridge-network
+              multus:
+                networkName: kindexgw
           volumes:
             - containerDisk:
                 image: quay.io/containerdisks/fedora:latest

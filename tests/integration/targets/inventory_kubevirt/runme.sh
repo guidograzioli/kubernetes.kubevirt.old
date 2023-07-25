@@ -14,15 +14,18 @@ export ANSIBLE_PYTHON_INTERPRETER=auto_silent
 
 ansible-inventory -i test.kubevirt.yml -y --list --output empty.yml "$@"
 
-ansible-playbook -vvv playbook.yml
+ansible-playbook playbook.yml
 
 # should list 2 vmi
-ansible-inventory -i test.kubevirt.yml -y -vvv --list --output all.yml "$@"
+ansible-inventory -i test.kubevirt.yml -y --list --output all.yml "$@"
 
 # should list 1 vm with label_app_test
-ansible-inventory -i test.label.kubevirt.yml -y -vvv --list --output label.yml "$@"
+ansible-inventory -i test.label.kubevirt.yml -y --list --output label.yml "$@"
 
-ansible-playbook -vvv verify.yml
+# should list 1 vm with multus interface
+ansible-inventory -i test.net.kubevirt.yml -y --list --output net.yml "$@"
+
+ansible-playbook verify.yml "$@"
 
 } || {
     exit 1

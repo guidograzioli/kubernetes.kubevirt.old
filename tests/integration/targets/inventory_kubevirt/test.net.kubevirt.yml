@@ -2,4 +2,4 @@ plugin: kubernetes.kubevirt.kubevirt
 connections:
   - namespaces:
     - default
-    label_selector: app=test
+    network_name: bridge-network
