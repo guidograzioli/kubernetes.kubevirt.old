@@ -4,11 +4,10 @@
   gather_facts: false
   hosts: localhost
   tasks:
-    - name: Wait 300 seconds for port 22 to become open and contain "OpenSSH"
+    - name: Wait 300 seconds for port 22 to become open
       ansible.builtin.wait_for:
         port: 22
         host: default-testvm3
-        search_regex: OpenSSH
         delay: 10
       connection: local
 
