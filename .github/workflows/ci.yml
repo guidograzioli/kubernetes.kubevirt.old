@@ -207,6 +207,7 @@ jobs:
         python-version:
           - "3.8"
           - "3.9"
+          - "3.10"
         exclude:
           - ansible-version: stable-2.9
             python-version: 3.9
