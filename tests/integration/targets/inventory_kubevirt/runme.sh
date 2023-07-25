@@ -12,6 +12,9 @@ export ANSIBLE_CALLBACKS_ENABLED=profile_tasks
 export ANSIBLE_INVENTORY_ENABLED=kubernetes.kubevirt.kubevirt,yaml
 export ANSIBLE_PYTHON_INTERPRETER=auto_silent
 
+ip a
+route -n
+
 ansible-inventory -i test.kubevirt.yml -y --list --output empty.yml "$@"
 
 ansible-playbook playbook.yml
