@@ -316,6 +316,7 @@ jobs:
         if: steps.read-targets.outputs.ansible_test_targets != ''
         run: >-
           /home/runner/work/kubernetes.kubevirt/kubernetes.kubevirt/source/hack/e2e-setup.sh \
+            -v \
             --configure-inotify-limits \
             --configure-secondary-network \
             --deploy-kubevirt \
@@ -329,7 +330,6 @@ jobs:
           CLUSTER_NAME: kv-testing
           KIND: kind
           KUBECTL: kubectl
-          OPT_CLEANUP: false
 
       - name: Run integration tests
         uses: ansible-network/github_actions/.github/actions/ansible_test_integration@main
