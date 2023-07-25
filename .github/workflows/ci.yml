@@ -22,140 +22,140 @@ jobs:
           mkdir -p /home/runner/.kube/
           cp -rp ${GITHUB_WORKSPACE}/ansible_collections/kubernetes/kubevirt/tests/.kubeconfig /home/runner/.kube/config
           cat /home/runner/.kube/config
-  # sanity:
-  #   uses: ansible-network/github_actions/.github/workflows/sanity.yml@main
-  #   with:
-  #     matrix_include: "[]"
-  #     matrix_exclude: >-
-  #         [
-  #           {
-  #             "ansible-version": "stable-2.9"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.12",
-  #             "python-version": "3.7"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.12",
-  #             "python-version": "3.11"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.13",
-  #             "python-version": "3.7"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.13",
-  #             "python-version": "3.11"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.14",
-  #             "python-version": "3.7"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.14",
-  #             "python-version": "3.8"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.14",
-  #             "python-version": "3.11"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.15",
-  #             "python-version": "3.7"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.15",
-  #             "python-version": "3.8"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.15",
-  #             "python-version": "3.11"
-  #           },
-  #           {
-  #             "ansible-version": "milestone",
-  #             "python-version": "3.7"
-  #           },
-  #           {
-  #             "ansible-version": "milestone",
-  #             "python-version": "3.8"
-  #           },
-  #           {
-  #             "ansible-version": "devel",
-  #             "python-version": "3.7"
-  #           },
-  #           {
-  #             "ansible-version": "devel",
-  #             "python-version": "3.8"
-  #           },
-  #           {
-  #             "ansible-version": "devel",
-  #             "python-version": "3.9"
-  #           }
-  #         ]
-  # unit-source:
-  #   uses: ansible-network/github_actions/.github/workflows/unit_source.yml@main
-  #   needs:
-  #     - prereq
-  #   with:
-  #     matrix_exclude: >-
-  #         [
-  #           {
-  #             "python-version": "3.11"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.12",
-  #             "python-version": "3.7"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.13",
-  #             "python-version": "3.7"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.12",
-  #             "python-version": "3.8"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.13",
-  #             "python-version": "3.8"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.14",
-  #             "python-version": "3.7"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.14",
-  #             "python-version": "3.8"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.15",
-  #             "python-version": "3.7"
-  #           },
-  #           {
-  #             "ansible-version": "stable-2.15",
-  #             "python-version": "3.8"
-  #           },
-  #           {
-  #             "ansible-version": "milestone",
-  #             "python-version": "3.7"
-  #           },
-  #           {
-  #             "ansible-version": "milestone",
-  #             "python-version": "3.8"
-  #           },
-  #           {
-  #             "ansible-version": "devel",
-  #             "python-version": "3.7"
-  #           },
-  #           {
-  #             "ansible-version": "devel",
-  #             "python-version": "3.8"
-  #           },
-  #           {
-  #             "ansible-version": "devel",
-  #             "python-version": "3.9"
-  #           }
-  #         ]
-  #     collection_pre_install: ''
+  sanity:
+    uses: ansible-network/github_actions/.github/workflows/sanity.yml@main
+    with:
+      matrix_include: "[]"
+      matrix_exclude: >-
+          [
+            {
+              "ansible-version": "stable-2.9"
+            },
+            {
+              "ansible-version": "stable-2.12",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.12",
+              "python-version": "3.11"
+            },
+            {
+              "ansible-version": "stable-2.13",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.13",
+              "python-version": "3.11"
+            },
+            {
+              "ansible-version": "stable-2.14",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.14",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "stable-2.14",
+              "python-version": "3.11"
+            },
+            {
+              "ansible-version": "stable-2.15",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.15",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "stable-2.15",
+              "python-version": "3.11"
+            },
+            {
+              "ansible-version": "milestone",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "milestone",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "devel",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "devel",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "devel",
+              "python-version": "3.9"
+            }
+          ]
+  unit-source:
+    uses: ansible-network/github_actions/.github/workflows/unit_source.yml@main
+    needs:
+      - prereq
+    with:
+      matrix_exclude: >-
+          [
+            {
+              "python-version": "3.11"
+            },
+            {
+              "ansible-version": "stable-2.12",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.13",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.12",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "stable-2.13",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "stable-2.14",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.14",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "stable-2.15",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.15",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "milestone",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "milestone",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "devel",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "devel",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "devel",
+              "python-version": "3.9"
+            }
+          ]
+      collection_pre_install: ''
   splitter:
     env:
       source_dir: "./source"
@@ -205,7 +205,7 @@ jobs:
           - milestone
           - devel
         python-version:
-          # - "3.8"
+          - "3.8"
           - "3.9"
         exclude:
           - ansible-version: stable-2.9
@@ -342,16 +342,16 @@ jobs:
   all_green:
     if: ${{ always() }}
     needs:
-      # - sanity
-      # - unit-source
+      - sanity
+      - unit-source
       - integration
     runs-on: ubuntu-latest
     steps:
       - run: >-
           python -c "assert set([
-          # '${{ needs.unit-source.result }}',
+          '${{ needs.unit-source.result }}',
           '${{ needs.integration.result }}'
           ]) == {'success'}"
-      # - run: >-
-          # python -c "assert '${{ needs.sanity.result }}'
-          # in ['success', 'failure']"
+      - run: >-
+          python -c "assert '${{ needs.sanity.result }}'
+          in ['success', 'failure']"
