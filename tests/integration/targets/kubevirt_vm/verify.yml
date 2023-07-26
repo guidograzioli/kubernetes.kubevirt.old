@@ -1,0 +1,73 @@
+---
+- name: Wait for ssh
+  connection: local
+  gather_facts: false
+  hosts: localhost
+  tasks:
+    - name: Connectivity
+      block:
+        - name: Wait 300 seconds for port 22 to become open
+          ansible.builtin.wait_for:
+            port: 22
+            host: "{{ hostvars['default-testvm3'].ansible_host }}"
+            delay: 30
+            timeout: 600
+      rescue:
+        - name: Port 22 not open
+          ansible.builtin.debug:
+            msg: "Port 22 still not open"
+
+- name: Connect to VM
+  gather_facts: true
+  hosts: default-testvm3
+  remote_user: fedora
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: Print out variables
+      ansible.builtin.debug:
+        var: ansible_facts
+
+- name: Verify creation with existing VM
+  connection: local
+  gather_facts: false
+  hosts: localhost
+  tasks:
+    - name: Create a VirtualMachine
+      kubernetes.kubevirt.kubevirt_vm:
+        state: present
+        name: testvm3
+        namespace: default
+        labels:
+          app: test
+      register: recreate
+    - ansible.builtin.assert:
+        that:
+          - not recreate.changed
+
+- name: Delete VM
+  connection: local
+  gather_facts: false
+  hosts: localhost
+  tasks:
+    - name: Delete a VirtualMachine
+      kubernetes.kubevirt.kubevirt_vm:
+        state: absent
+        name: testvm3
+        namespace: default
+        wait: true
+
+- name: Verify VM deletion
+  connection: local
+  gather_facts: false
+  hosts: localhost
+  tasks:
+    - name: Delete a VirtualMachine
+      kubernetes.kubevirt.kubevirt_vm:
+        state: absent
+        name: testvm3
+        namespace: default
+      register: delete
+    - ansible.builtin.assert:
+        that:
+          - not delete.changed
