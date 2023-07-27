@@ -15,7 +15,7 @@ ansible-inventory -i test.kubevirt.yml -y --list "$@"
 
 ansible-playbook verify.yml -i test.kubevirt.yml --private-key=files/priv_key "$@"
 
-rm $HOME/.ssh/known_hosts
+rm "$HOME/.ssh/known_hosts"
 } || {
     exit 1
 }
