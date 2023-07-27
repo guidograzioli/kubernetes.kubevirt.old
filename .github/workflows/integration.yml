@@ -1,0 +1,385 @@
+name: Integration tests
+on:
+  workflow_call:
+    inputs:
+      matrix_exclude:
+        # https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html#ansible-core-support-matrix
+        # 2.9 supports Python 3.5-3.8
+        # 2.13 supports Python 3.8-3.10
+        # 2.14 supports Python 3.9-3.11
+        # 2.15 supports Python 3.9-3.11
+        # 2.16 supports Python 3.10-3.11
+        # https://docs.ansible.com/ansible/devel/roadmap/ROADMAP_2_16.html
+        # milestone is 2.16 until after 2.16 branches from devel
+        # devel is 2.16 until 2023-09-18
+        default: >-
+          [
+            {
+              "ansible-version": "stable-2.9",
+              "python-version": "3.9"
+            },
+            {
+              "ansible-version": "stable-2.9",
+              "python-version": "3.10"
+            },
+            {
+              "ansible-version": "stable-2.9",
+              "python-version": "3.11"
+            },
+            {
+              "ansible-version": "stable-2.12",
+              "python-version": "3.11"
+            },
+            {
+              "ansible-version": "stable-2.13",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.13",
+              "python-version": "3.11"
+            },
+            {
+              "ansible-version": "stable-2.14",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.14",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "stable-2.15",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "stable-2.15",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "milestone",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "milestone",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "milestone",
+              "python-version": "3.9"
+            },
+            {
+              "ansible-version": "devel",
+              "python-version": "3.7"
+            },
+            {
+              "ansible-version": "devel",
+              "python-version": "3.8"
+            },
+            {
+              "ansible-version": "devel",
+              "python-version": "3.9"
+            }
+          ]
+        required: false
+        type: string
+      matrix_include:
+        # python 3.6 is not available after ubuntu-20.04
+        # python 3.6 is not supported on ansible 2.12+
+        default: >-
+          []
+        required: false
+        type: string
+      unstable:
+        default: >-
+          [
+            "devel",
+          ]
+        required: false
+        type: string
+      ansible_test_targets:
+        required: true
+        type: string
+jobs:
+  integration:
+    env:
+      PY_COLORS: "1"
+      source: "./source"
+      core: "./core"
+      cloud_common: "./cloudcommon"
+      ansible_posix: "./ansible_posix"
+    strategy:
+      fail-fast: false
+      matrix:
+        test-target: ${{ fromJSON(inputs.ansible_test_targets) }}
+        ansible-version:
+          - stable-2.9
+          - stable-2.12
+          - stable-2.14
+          - stable-2.15
+          - milestone
+          - devel
+        python-version:
+          - "3.8"
+          - "3.9"
+          - "3.11"
+        exclude: ${{ fromJSON(inputs.matrix_exclude) }}
+        include: ${{ fromJSON(inputs.matrix_include) }}
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ contains(fromJSON(inputs.unstable), matrix.ansible-version) }}
+
+    name: "${{ matrix.test-target }} / py${{ matrix.python-version }} / ${{ matrix.ansible-version }}"
+    steps:
+      - name: Checkout kubernetes.core repository
+        uses: actions/checkout@v3
+        with:
+          path: ${{ env.core }}
+          fetch-depth: "0"
+        if: inputs.ansible_test_targets != ''
+
+      - name: checkout ansible-collections/cloud.common
+        uses: ansible-network/github_actions/.github/actions/checkout_dependency@main
+        with:
+          repository: ansible-collections/cloud.common
+          path: ${{ env.cloud_common }}
+          ref: main
+        if: inputs.ansible_test_targets != ''
+
+      - name: checkout ansible-collections/ansible.posix
+        uses: ansible-network/github_actions/.github/actions/checkout_dependency@main
+        with:
+          repository: ansible-collections/ansible.posix
+          path: ${{ env.ansible_posix }}
+          ref: main
+        if: inputs.ansible_test_targets != ''
+
+      - name: Checkout kubernetes.kubevirt repository
+        uses: actions/checkout@v3
+        with:
+          path: ${{ env.source }}
+          fetch-depth: "0"
+        if: inputs.ansible_test_targets != ''
+
+      - name: install kubernetes.core collection
+        uses: ansible-network/github_actions/.github/actions/build_install_collection@main
+        with:
+          install_python_dependencies: true
+          source_path: ${{ env.core }}
+        if: inputs.ansible_test_targets != ''
+
+      - name: install cloud.common collection
+        uses: ansible-network/github_actions/.github/actions/build_install_collection@main
+        with:
+          install_python_dependencies: true
+          source_path: ${{ env.cloud_common }}
+        if: inputs.ansible_test_targets != ''
+
+      - name: install ansible.posix collection
+        uses: ansible-network/github_actions/.github/actions/build_install_collection@main
+        with:
+          install_python_dependencies: true
+          source_path: ${{ env.ansible_posix }}
+        if: inputs.ansible_test_targets != ''
+
+      - name: install kubernetes.kubevirt collection
+        id: install-collection
+        uses: ansible-network/github_actions/.github/actions/build_install_collection@main
+        with:
+          install_python_dependencies: true
+          source_path: ${{ env.source }}
+        if: inputs.ansible_test_targets != ''
+
+      - name: install kind / kubectl
+        uses: helm/kind-action@v1.8.0
+        with:
+          install_only: true
+          version: v0.20.0
+          kubectl_version: v1.27.3
+        if: inputs.ansible_test_targets != ''
+
+      - name: Configure limits
+        if: inputs.ansible_test_targets != ''
+        run: |
+            echo "Configuring inotify limits"
+            sudo sysctl fs.inotify.max_user_instances=512
+            sudo sysctl fs.inotify.max_user_watches=1048576
+        shell: bash
+        env:
+          CLUSTER_NAME: kv-testing
+          SECONDARY_NETWORK_NAME: kindexgw
+          SECONDARY_NETWORK_SUBNET: 172.19.0.0/16
+
+      - name: create kind cluster
+        if: inputs.ansible_test_targets != ''
+        run: |
+          echo "Creating cluster with kind"
+          DOCKER_HOST=unix://${_cri_socket} ${KIND} create cluster --wait 2m --name "${CLUSTER_NAME}"
+
+          echo "Waiting for the network to be ready"
+          ${KUBECTL} wait --for=condition=ready pods --namespace=kube-system -l k8s-app=kube-dns --timeout=2m
+
+          echo "K8S cluster is up:"
+          ${KUBECTL} get nodes -o wide
+        shell: bash
+        env:
+          CLUSTER_NAME: kv-testing
+          KIND: kind
+          KUBECTL: kubectl
+          _cri_socket: "/var/run/docker.sock"
+
+      - name: Configure secondary net
+        if: inputs.ansible_test_targets != ''
+        run: |
+            echo "Configuring secondary network"
+            # Name of the single kind node
+            node=${CLUSTER_NAME}-control-plane
+            # Interface added when connecting the secondary network
+            secondary_interface=eth1
+
+            ${_cri_bin} network create "${SECONDARY_NETWORK_NAME}" --driver=bridge --subnet="${SECONDARY_NETWORK_SUBNET}"
+            ${_cri_bin} network connect "${SECONDARY_NETWORK_NAME}" "${node}"
+
+            # Get the ip address assigned to the interface of the secondary network on the node
+            ip=$(
+              ${_cri_bin} exec "${node}" ip ad show dev "${secondary_interface}" scope global |
+                sed -n 's/^    inet \([[:digit:]]\{1,3\}\.[[:digit:]]\{1,3\}\.[[:digit:]]\{1,3\}\.[[:digit:]]\{1,3\}\/[[:digit:]]\{1,2\}\).*$/\1/p'
+            )
+
+            # Configure a bridge inside the node that workloads can attach to
+            ${_cri_bin} exec "${node}" ip link add "${SECONDARY_NETWORK_NAME}" type bridge
+            ${_cri_bin} exec "${node}" ip link set "${secondary_interface}" master "${SECONDARY_NETWORK_NAME}"
+            ${_cri_bin} exec "${node}" ip link set up "${SECONDARY_NETWORK_NAME}"
+            # Move the ip address from the secondary interface to the newly created bridge
+            ${_cri_bin} exec "${node}" ip address del "${ip}" dev "${secondary_interface}"
+            ${_cri_bin} exec "${node}" ip address add "${ip}" dev "${SECONDARY_NETWORK_NAME}"
+        shell: bash
+        env:
+          CLUSTER_NAME: kv-testing
+          SECONDARY_NETWORK_NAME: kindexgw
+          SECONDARY_NETWORK_SUBNET: 172.19.0.0/16
+          _cri_bin: docker
+
+      - name: deploy kubevirt
+        if: inputs.ansible_test_targets != ''
+        run: |
+            echo "Deploying KubeVirt"
+            ${KUBECTL} apply -f "https://github.com/kubevirt/kubevirt/releases/download/${KUBEVIRT_VERSION}/kubevirt-operator.yaml"
+            ${KUBECTL} apply -f "https://github.com/kubevirt/kubevirt/releases/download/${KUBEVIRT_VERSION}/kubevirt-cr.yaml"
+
+            kvm_nested="unknown"
+            if [ -f "/sys/module/kvm_intel/parameters/nested" ]; then
+              kvm_nested=$(cat /sys/module/kvm_intel/parameters/nested)
+            elif [ -f "/sys/module/kvm_amd/parameters/nested" ]; then
+              kvm_nested=$(cat /sys/module/kvm_amd/parameters/nested)
+            fi
+
+            if [ "$kvm_nested" != "1" ] && [ "$kvm_nested" != "Y" ] && [ "$kvm_nested" != "y" ]; then
+              echo "Configuring Kubevirt to use emulation"
+              ${KUBECTL} patch kubevirt kubevirt --namespace kubevirt --type=merge --patch '{"spec":{"configuration":{"developerConfiguration":{"useEmulation":true}}}}'
+            fi
+
+            echo "Waiting for KubeVirt to be ready"
+            ${KUBECTL} wait --for=condition=Available kubevirt kubevirt --namespace=kubevirt --timeout=5m
+
+            echo "Successfully deployed KubeVirt:"
+            ${KUBECTL} get pods -n kubevirt
+
+            echo "Deploying KubeVirt containerized-data-importer"
+            ${KUBECTL} apply -f "https://github.com/kubevirt/containerized-data-importer/releases/download/${KUBEVIRT_CDI_VERSION}/cdi-operator.yaml"
+            ${KUBECTL} apply -f "https://github.com/kubevirt/containerized-data-importer/releases/download/${KUBEVIRT_CDI_VERSION}/cdi-cr.yaml"
+
+            echo "Deploying KubeVirt common-instancetypes"
+            ${KUBECTL} apply -f "https://github.com/kubevirt/common-instancetypes/releases/download/${KUBEVIRT_COMMON_INSTANCETYPES_VERSION}/common-instancetypes-all-bundle-${KUBEVIRT_COMMON_INSTANCETYPES_VERSION}.yaml"
+        shell: bash
+        env:
+          CLUSTER_NAME: kv-testing
+          KIND: kind
+          KUBECTL: kubectl
+          KUBEVIRT_VERSION: v1.0.0
+          KUBEVIRT_CDI_VERSION: v1.56.0
+          KUBEVIRT_COMMON_INSTANCETYPES_VERSION: v0.3.0
+
+      - name: deploy CNAO
+        if: inputs.ansible_test_targets != ''
+        run: |
+          echo "Deploying CNAO (with multus and bridge CNIs)"
+          ${KUBECTL} apply -f "https://github.com/kubevirt/cluster-network-addons-operator/releases/download/${CNAO_VERSION}/namespace.yaml"
+          ${KUBECTL} apply -f "https://github.com/kubevirt/cluster-network-addons-operator/releases/download/${CNAO_VERSION}/network-addons-config.crd.yaml"
+          ${KUBECTL} apply -f "https://github.com/kubevirt/cluster-network-addons-operator/releases/download/${CNAO_VERSION}/operator.yaml"
+
+          cat <<EOF | ${KUBECTL} apply -f -
+          apiVersion: networkaddonsoperator.network.kubevirt.io/v1
+          kind: NetworkAddonsConfig
+          metadata:
+            name: cluster
+          spec:
+            imagePullPolicy: IfNotPresent
+            linuxBridge: {}
+            multus: {}
+          EOF
+
+          echo "Waiting for CNAO to be ready"
+          ${KUBECTL} wait --for condition=Available networkaddonsconfig cluster --timeout=5m
+
+          echo "Successfully deployed CNAO:"
+          ${KUBECTL} get networkaddonsconfig cluster -o yaml
+        shell: bash
+        env:
+          CLUSTER_NAME: kv-testing
+          KIND: kind
+          KUBECTL: kubectl
+          CNAO_VERSION: v0.87.0
+
+      - name: create NAD
+        if: inputs.ansible_test_targets != ''
+        run: |
+          echo "Creating NetworkAttachmentDefinition (with bridge CNI)"
+          cat <<EOF | ${KUBECTL} apply -f -
+          apiVersion: k8s.cni.cncf.io/v1
+          kind: NetworkAttachmentDefinition
+          metadata:
+            name: ${SECONDARY_NETWORK_NAME}
+            namespace: ${NAMESPACE}
+          spec:
+            config: |
+              {
+                "cniVersion": "0.3.1",
+                "name": "${SECONDARY_NETWORK_NAME}",
+                "type": "bridge",
+                "bridge": "${SECONDARY_NETWORK_NAME}",
+                "ipam": {
+                  "type": "host-local",
+                  "ranges": [
+                    [
+                      {
+                        "subnet": "${SECONDARY_NETWORK_SUBNET}",
+                        "rangeStart": "${SECONDARY_NETWORK_RANGE_START}",
+                        "rangeEnd": "${SECONDARY_NETWORK_RANGE_END}",
+                        "gateway": "${SECONDARY_NETWORK_GATEWAY}"
+                      }
+                    ]
+                  ]
+                }
+              }
+          EOF
+
+          echo "Successfully created NetworkAttachmentDefinition:"
+          ${KUBECTL} get networkattachmentdefinition.k8s.cni.cncf.io "${SECONDARY_NETWORK_NAME}" --namespace "${NAMESPACE}" -o yaml
+        shell: bash
+        env:
+          CLUSTER_NAME: kv-testing
+          KIND: kind
+          KUBECTL: kubectl
+          SECONDARY_NETWORK_NAME: kindexgw
+          SECONDARY_NETWORK_SUBNET: 172.19.0.0/16
+          SECONDARY_NETWORK_RANGE_START: 172.19.1.1
+          SECONDARY_NETWORK_RANGE_END: 172.19.255.254
+          SECONDARY_NETWORK_GATEWAY: 172.19.0.1
+          NAMESPACE: default
+
+      - name: Run integration tests
+        uses: ansible-network/github_actions/.github/actions/ansible_test_integration@main
+        with:
+          collection_path: ${{ steps.install-collection.outputs.collection_path }}
+          python_version: ${{ matrix.python-version }}
+          ansible_version: ${{ matrix.ansible-version }}
+          ansible_test_targets: ${{ matrix.test-target }}
+        if: inputs.ansible_test_targets != ''
