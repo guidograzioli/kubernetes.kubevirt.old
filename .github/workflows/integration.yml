@@ -198,7 +198,7 @@ jobs:
 
       - name: Configure limits
         if: inputs.ansible_test_targets != ''
-        run: >-
+        run: |
             echo "Configuring inotify limits"
             sudo sysctl fs.inotify.max_user_instances=512
             sudo sysctl fs.inotify.max_user_watches=1048576
@@ -210,7 +210,7 @@ jobs:
 
       - name: create kind cluster
         if: inputs.ansible_test_targets != ''
-        run: >-
+        run: |
           echo "Creating cluster with kind"
           DOCKER_HOST=unix://${_cri_socket} ${KIND} create cluster --wait 2m --name "${CLUSTER_NAME}"
 
@@ -228,12 +228,12 @@ jobs:
 
       - name: Configure secondary net
         if: inputs.ansible_test_targets != ''
-        run: >-
+        run: |
             echo "Configuring secondary network"
             # Name of the single kind node
-            local node=${CLUSTER_NAME}-control-plane
+            node=${CLUSTER_NAME}-control-plane
             # Interface added when connecting the secondary network
-            local secondary_interface=eth1
+            secondary_interface=eth1
 
             ${_cri_bin} network create "${SECONDARY_NETWORK_NAME}" --driver=bridge --subnet="${SECONDARY_NETWORK_SUBNET}"
             ${_cri_bin} network connect "${SECONDARY_NETWORK_NAME}" "${node}"
