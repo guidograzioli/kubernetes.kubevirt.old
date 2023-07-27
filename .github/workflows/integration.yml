@@ -224,6 +224,7 @@ jobs:
           CLUSTER_NAME: kv-testing
           KIND: kind
           KUBECTL: kubectl
+          _cri_socket: "/var/run/docker.sock"
 
       - name: Configure secondary net
         if: inputs.ansible_test_targets != ''
@@ -256,6 +257,7 @@ jobs:
           CLUSTER_NAME: kv-testing
           SECONDARY_NETWORK_NAME: kindexgw
           SECONDARY_NETWORK_SUBNET: 172.19.0.0/16
+          _cri_bin: docker
 
       - name: deploy kubevirt
         if: inputs.ansible_test_targets != ''
@@ -381,5 +383,5 @@ jobs:
           collection_path: ${{ steps.install-collection.outputs.collection_path }}
           python_version: ${{ matrix.python-version }}
           ansible_version: ${{ matrix.ansible-version }}
-          ansible_test_targets: ${{ steps.read-targets.outputs.ansible_test_targets }}
+          ansible_test_targets: ${{ matrix.test-target }}
         if: inputs.ansible_test_targets != ''
