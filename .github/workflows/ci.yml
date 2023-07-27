@@ -158,6 +158,8 @@ jobs:
       collection_pre_install: ''
   integration:
     uses: guidograzioli/kubernetes.kubevirt/.github/workflows/integration.yml@main
+    needs:
+      - unit-source
     with:
       ansible_test_targets: >-
           [
