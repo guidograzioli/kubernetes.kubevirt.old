@@ -6,7 +6,7 @@
   tasks:
     - name: Connectivity
       block:
-        - name: Wait 300 seconds for port 22 to become open
+        - name: Wait 600 seconds for port 22 to become open
           ansible.builtin.wait_for:
             port: 22
             host: "{{ hostvars['default-testvm3'].ansible_host }}"
@@ -16,6 +16,12 @@
         - name: Port 22 not open
           ansible.builtin.debug:
             msg: "Port 22 still not open"
+        - name: Wait 300 seconds for port 22 to become open
+          ansible.builtin.wait_for:
+            port: 22
+            host: "{{ hostvars['default-testvm3'].ansible_host }}"
+            delay: 30
+            timeout: 300
 
 - name: Connect to VM
   gather_facts: true
@@ -24,7 +30,7 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
   tasks:
-    - name: Print out variables
+    - name: Print out virtual machine facts
       ansible.builtin.debug:
         var: ansible_facts
 
@@ -41,7 +47,8 @@
         labels:
           app: test
       register: recreate
-    - ansible.builtin.assert:
+    - name: Assert module reported no changes
+      ansible.builtin.assert:
         that:
           - not recreate.changed
 
@@ -68,6 +75,7 @@
         name: testvm3
         namespace: default
       register: delete
-    - ansible.builtin.assert:
+    - name: Assert module reported no changes
+      ansible.builtin.assert:
         that:
           - not delete.changed

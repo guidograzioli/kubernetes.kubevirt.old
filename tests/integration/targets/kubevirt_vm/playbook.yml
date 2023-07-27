@@ -11,14 +11,14 @@
         namespace: default
         labels:
           app: test
-        wait: yes
+        wait: true
         wait_timeout: 600
         spec:
           domain:
             cpu:
               sockets: 1
             memory:
-              guest: 1024Mi
+              guest: 1152Mi
             devices:
               interfaces:
                 - name: default
