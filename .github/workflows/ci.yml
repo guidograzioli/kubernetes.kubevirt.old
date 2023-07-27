@@ -156,35 +156,8 @@ jobs:
             }
           ]
       collection_pre_install: ''
-  splitter:
-    env:
-      source_dir: "./source"
-    runs-on: ubuntu-latest
-    outputs:
-      test_targets: ${{ steps.display.outputs.test_targets }}
-    steps:
-      - name: Checkout the collection repository
-        uses: actions/checkout@v3
-        with:
-          path: ${{ env.source_dir }}
-          fetch-depth: "0"
-
-      - name: list changes for pull request
-        id: splitter
-        uses: ansible-network/github_actions/.github/actions/ansible_test_splitter@main
-        with:
-          collections_to_test: ${{ env.source_dir }}
-          total_jobs: 8
-
-      - name: display targets
-        id: display
-        run: echo "test_targets=kubernetes.kubevirt-1:kubevirt_vm;kubernetes.kubevirt-2:inventory_kubevirt" >> $GITHUB_OUTPUT
-        shell: bash
-
   integration:
     uses: guidograzioli/kubernetes.kubevirt/.github/workflows/integration.yml@main
-    needs:
-      - splitter
     with:
       ansible_test_targets: >-
           [
