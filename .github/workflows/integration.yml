@@ -110,6 +110,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        test-target: ${{ fromJSON(inputs.ansible_test_targets) }}
         ansible-version:
           - stable-2.9
           - stable-2.12
@@ -126,22 +127,8 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: ${{ contains(fromJSON(inputs.unstable), matrix.ansible-version) }}
 
-    name: "py${{ matrix.python-version }} / ${{ matrix.ansible-version }}"
+    name: "${{ matrix.test-target }} / py${{ matrix.python-version }} / ${{ matrix.ansible-version }}"
     steps:
-      - name: Read ansible-test targets
-        id: read-targets
-        run: >-
-          echo "ansible_test_targets=$(echo "${{ inputs.ansible_test_targets }}" | sed s/';'/'\n'/g |
-          grep "kubernetes.kubevirt" | cut -d ':' -f2 | sed s/','/' '/g)" >> $GITHUB_OUTPUT
-        shell: bash
-
-      - name: Display targets
-        run: >-
-          echo "targets to test: $ANSIBLE_TARGETS"
-        shell: bash
-        env:
-          ANSIBLE_TARGETS: ${{ steps.read-targets.outputs.ansible_test_targets }}
-
       - name: Checkout kubernetes.core repository
         uses: actions/checkout@v3
         with:

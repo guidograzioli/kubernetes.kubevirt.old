@@ -186,8 +186,11 @@ jobs:
     needs:
       - splitter
     with:
-      matrix_include: "[]"
-      ansible_test_targets: kubernetes.kubevirt-1:kubevirt_vm;kubernetes.kubevirt-2:inventory_kubevirt
+      ansible_test_targets: >-
+          [
+            "kubevirt_vm",
+            "inventory_kubevirt"
+          ]
     name: "integration"
 
   all_green:
